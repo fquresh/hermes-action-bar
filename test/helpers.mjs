@@ -110,8 +110,8 @@ export function setup(html = CHAT, { highlights = false, storage = {} } = {}) {
   const byId = id => doc.getElementById(id)
   const roots = []
   const area = name => contributions.filter(contribution => contribution.area === name)
-  const bar = () => doc.querySelector('[data-sidenote="bar"]')
-  const card = () => doc.querySelector('[data-sidenote="card"]')
+  const bar = () => doc.querySelector('[data-hermes-action-bar="bar"]')
+  const card = () => doc.querySelector('[data-hermes-action-bar="card"]')
   const fire = (target, type, init = {}) => {
     const Event = type.startsWith('key') ? window.KeyboardEvent : type === 'input' ? window.Event : window.MouseEvent
     const event = new Event(type, { bubbles: true, cancelable: true, ...init })

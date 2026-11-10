@@ -1,4 +1,4 @@
-# Sidenote
+# Hermes Action Bar
 
 A Hermes Desktop plugin for the questions you have while you read a reply.
 
@@ -78,7 +78,7 @@ Escape closes the card.
 
 ### Your own actions
 
-Open **Settings > Plugins > Sidenote**.
+Open **Settings > Plugins > Action Bar**.
 
 Each action is a label and a prompt.
 You can change the three defaults, add your own, and change their order.
@@ -104,11 +104,11 @@ The commands are also in the command palette.
 
 **From Git:** in Hermes Desktop, open **Capabilities > Plugins > Install from Git** and paste the URL of this repository.
 
-**By hand:** copy `desktop/plugin.js` to `~/.hermes/desktop-plugins/sidenote/plugin.js`.
-On Windows the folder is `%USERPROFILE%\.hermes\desktop-plugins\sidenote\`.
+**By hand:** copy `desktop/plugin.js` to `~/.hermes/desktop-plugins/hermes-action-bar/plugin.js`.
+On Windows the folder is `%USERPROFILE%\.hermes\desktop-plugins\hermes-action-bar\`.
 Then run **Reload desktop plugins** from the command palette.
 
-Sidenote needs Hermes 0.22.5 or later.
+Action Bar needs Hermes 0.22.5 or later.
 
 ## How it works
 
@@ -127,7 +127,7 @@ If that attribute is not on the page, the bar shows for any selection outside an
 
 Two safety details:
 
-- **Quotes stay inert.** Hermes turns `@file:` and other `@kind:` text into live context references. A reply can contain such text, also by prompt injection. Sidenote puts a zero-width space after the `@` in each quote, so a quote can never attach a file.
+- **Quotes stay inert.** Hermes turns `@file:` and other `@kind:` text into live context references. A reply can contain such text, also by prompt injection. Action Bar puts a zero-width space after the `@` in each quote, so a quote can never attach a file.
 - **Model output stays text.** The card renders Markdown with `createElement` and text nodes only. It never parses HTML.
 
 ## Privacy
@@ -173,9 +173,9 @@ This runs the catalog admission checks.
 
 - [freefate258/quote-ask](https://github.com/freefate258/quote-ask) quotes a selection into the composer.
 - [BrokeSkill/Hermes-Insight](https://github.com/BrokeSkill/Hermes-Insight) defines a selected term in a side panel.
-- [fquresh/hermes-quote-selection](https://github.com/fquresh/hermes-quote-selection) is the plugin that Sidenote grew from.
+- [fquresh/hermes-quote-selection](https://github.com/fquresh/hermes-quote-selection) is the plugin that Action Bar grew from.
 
-Sidenote shares no code with the first two.
+Action Bar shares no code with the first two.
 It differs in three ways: one comment for each quote, answers that stay out of the chat with follow-up questions, and actions that the user defines.
 
 ## License

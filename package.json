@@ -1,5 +1,5 @@
 {
-  "name": "hermes-sidenote",
+  "name": "hermes-action-bar",
   "version": "0.1.0",
   "description": "Hermes Desktop plugin: reply to a highlight, or ask about it in an answer card that stays out of the chat.",
   "private": true,
@@ -8,7 +8,7 @@
   "scripts": {
     "check": "node --check desktop/plugin.js",
     "test": "node --import ./test/register.mjs --test --test-reporter=spec test/*.test.mjs",
-    "install:local": "mkdir -p \"$HOME/.hermes/desktop-plugins/sidenote\" && cp desktop/plugin.js \"$HOME/.hermes/desktop-plugins/sidenote/plugin.js\"",
+    "install:local": "mkdir -p \"$HOME/.hermes/desktop-plugins/hermes-action-bar\" && cp desktop/plugin.js \"$HOME/.hermes/desktop-plugins/hermes-action-bar/plugin.js\"",
     "harness:build": "esbuild test/harness/main.mjs --bundle --format=esm --alias:@hermes/plugin-sdk=./test/harness/sdk.mjs --define:process.env.NODE_ENV='\"development\"' --outfile=test/harness/dist/main.js",
     "harness": "npm run harness:build && python3 -m http.server 4173 --directory test/harness"
   },

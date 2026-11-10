@@ -89,7 +89,7 @@ test('the bar stays when the app clears the selection (Hermes issue #144421)', a
 
   // The action still has the text that was captured at mouse-up.
   await page.click(page.button(page.bar(), 'Reply'))
-  assert.equal(page.card().querySelector('.sn-quote').textContent, P1)
+  assert.equal(page.card().querySelector('.hab-quote').textContent, P1)
 })
 
 test('a mouse-down elsewhere, Escape, a scroll and a resize hide the bar', async () => {
@@ -161,7 +161,7 @@ test('Copy puts the selected text on the clipboard', async () => {
 test('the highlight is painted while the bar or a card is open', async () => {
   page = setup(CHAT, { highlights: true })
 
-  const painted = () => page.window.CSS.highlights.get('sidenote-active')?.ranges.length ?? 0
+  const painted = () => page.window.CSS.highlights.get('hermes-action-bar-active')?.ranges.length ?? 0
 
   await page.highlight(page.byId('p1'))
   assert.equal(painted(), 1)
@@ -210,9 +210,9 @@ test('the reply strip shows each quote with its comment, and both can change', a
 
   const view = await strip()
 
-  assert.equal(view.querySelector('.sn-strip-count').textContent, '2 replies')
+  assert.equal(view.querySelector('.hab-strip-count').textContent, '2 replies')
   assert.deepEqual(
-    [...view.querySelectorAll('.sn-reply-quote')].map(node => node.textContent),
+    [...view.querySelectorAll('.hab-reply-quote')].map(node => node.textContent),
     [P1, P2]
   )
   assert.deepEqual(
@@ -225,7 +225,7 @@ test('the reply strip shows each quote with its comment, and both can change', a
     mod.repliesFor('new').map(reply => reply.quote),
     [P2]
   )
-  assert.equal(view.querySelector('.sn-strip-count').textContent, '1 reply')
+  assert.equal(view.querySelector('.hab-strip-count').textContent, '1 reply')
 })
 
 test('the strip is empty for a chat that has no replies', async () => {
@@ -234,10 +234,10 @@ test('the strip is empty for a chat that has no replies', async () => {
 
   const view = await strip()
 
-  assert.equal(view.querySelector('.sn-strip'), null, 'the fresh draft has none')
+  assert.equal(view.querySelector('.hab-strip'), null, 'the fresh draft has none')
 
   await page.act(() => mod.addReply('new', P2))
-  assert.equal(view.querySelectorAll('.sn-reply').length, 1)
+  assert.equal(view.querySelectorAll('.hab-reply').length, 1)
 })
 
 test('send: each quote, then its comment, then the typed message', async () => {
@@ -382,11 +382,11 @@ test('Explain: one stateless model call, the answer in the card, nothing in the 
   assert.ok(params.input.includes(P2), 'the text around the passage is sent as context')
   assert.ok(params.input.includes('<question>\nExplain this passage'))
 
-  const answer = page.card().querySelector('.sn-a')
+  const answer = page.card().querySelector('.hab-a')
 
   assert.equal(answer.textContent, 'It is the forecast for next year.')
   assert.equal(answer.querySelector('strong').textContent, 'forecast')
-  assert.equal(page.card().querySelector('.sn-title').textContent, 'Explain')
+  assert.equal(page.card().querySelector('.hab-title').textContent, 'Explain')
 
   assert.equal(fake.calls.submit.length, 0)
   assert.equal(fake.calls.insertText.length, 0)
@@ -410,11 +410,11 @@ test('a follow-up carries the earlier turns', async () => {
   assert.ok(input.includes('Answer: First answer.'))
   assert.ok(input.includes('<question>\nWhy 70%?\n</question>'))
   assert.deepEqual(
-    [...page.card().querySelectorAll('.sn-q')].map(node => node.textContent),
+    [...page.card().querySelectorAll('.hab-q')].map(node => node.textContent),
     ['Why 70%?']
   )
   assert.deepEqual(
-    [...page.card().querySelectorAll('.sn-a')].map(node => node.textContent),
+    [...page.card().querySelectorAll('.hab-a')].map(node => node.textContent),
     ['First answer.', 'Second answer.']
   )
 })
@@ -435,7 +435,7 @@ test('Ask: the card waits for the question', async () => {
   await page.type(input, 'What is WAL?')
   assert.equal(fake.calls.request.length, 1)
   assert.ok(fake.calls.request[0].params.input.includes('<question>\nWhat is WAL?\n</question>'))
-  assert.equal(page.card().querySelector('.sn-q').textContent, 'What is WAL?')
+  assert.equal(page.card().querySelector('.hab-q').textContent, 'What is WAL?')
 })
 
 test('a failed call shows the error with Retry', async () => {
@@ -446,16 +446,16 @@ test('a failed call shows the error with Retry', async () => {
   await page.highlight(page.byId('p1'))
   await page.click(page.button(page.bar(), 'Summarize'))
 
-  const error = page.card().querySelector('.sn-error')
+  const error = page.card().querySelector('.hab-error')
 
   assert.ok(error.textContent.includes('no provider'))
-  assert.equal(page.card().querySelector('.sn-a'), null)
+  assert.equal(page.card().querySelector('.hab-a'), null)
 
   fake.oneshot = async () => ({ text: 'Recovered.' })
   await page.click(page.button(error, 'Retry'))
 
-  assert.equal(page.card().querySelector('.sn-error'), null)
-  assert.equal(page.card().querySelector('.sn-a').textContent, 'Recovered.')
+  assert.equal(page.card().querySelector('.hab-error'), null)
+  assert.equal(page.card().querySelector('.hab-a').textContent, 'Recovered.')
   assert.equal(fake.calls.request.length, 2)
 })
 
@@ -465,7 +465,7 @@ test('an empty answer is an error, not a blank card', async () => {
   await page.highlight(page.byId('p1'))
   await page.click(page.button(page.bar(), 'Explain'))
 
-  assert.ok(page.card().querySelector('.sn-error').textContent.includes('no text'))
+  assert.ok(page.card().querySelector('.hab-error').textContent.includes('no text'))
 })
 
 test('an answer that arrives after the card is closed is dropped', async () => {
@@ -476,14 +476,14 @@ test('an answer that arrives after the card is closed is dropped', async () => {
   fake.oneshot = () => new Promise(resolve => (finish = resolve))
   await page.highlight(page.byId('p1'))
   await page.click(page.button(page.bar(), 'Explain'))
-  assert.ok(page.card().querySelector('.sn-pending'))
+  assert.ok(page.card().querySelector('.hab-pending'))
 
   await page.click(page.button(page.card(), 'Close'))
   finish({ text: 'late' })
   await tick()
 
   assert.equal(page.card(), null)
-  assert.equal(page.doc.querySelector('.sn-a'), null)
+  assert.equal(page.doc.querySelector('.hab-a'), null)
 })
 
 test('Send to chat puts the quote and the answer in the composer, and does not send', async () => {
@@ -514,7 +514,7 @@ test('model output is never parsed as HTML', () => {
   assert.equal(box.querySelector('strong').textContent, 'bold')
   assert.equal(box.querySelector('code').textContent, 'code')
   assert.equal(box.querySelectorAll('li').length, 2)
-  assert.equal(box.querySelectorAll('.sn-link').length, 1, 'only http(s) links are links')
+  assert.equal(box.querySelectorAll('.hab-link').length, 1, 'only http(s) links are links')
   assert.ok(box.textContent.includes('[bad](javascript:alert(1))'))
 })
 
@@ -524,7 +524,7 @@ test('a link in an answer opens in the system browser', async () => {
   await page.highlight(page.byId('p1'))
   await page.click(page.button(page.bar(), 'Explain'))
 
-  page.card().querySelector('.sn-link').click()
+  page.card().querySelector('.hab-link').click()
   assert.deepEqual(page.opened, ['https://example.com/10k'])
 })
 
@@ -567,7 +567,7 @@ test('the settings page edits the actions and saves them', async () => {
 
   const view = await page.mount(page.settingsPage().render)
 
-  assert.equal(view.querySelectorAll('.sn-row').length, 3)
+  assert.equal(view.querySelectorAll('.hab-row').length, 3)
 
   await page.act(() => page.button(view, 'Add research set').click())
   assert.deepEqual(
@@ -581,7 +581,7 @@ test('the settings page edits the actions and saves them', async () => {
 
   // A new, half-typed row is not saved until it is complete.
   await page.act(() => page.button(view, 'Add action').click())
-  assert.equal(view.querySelectorAll('.sn-row').length, 8)
+  assert.equal(view.querySelectorAll('.hab-row').length, 8)
   assert.equal(page.store.actions.length, 7)
 
   await page.act(() => page.button(view, 'Reset to defaults').click())
@@ -601,19 +601,19 @@ test('the settings page edits the actions and saves them', async () => {
 test('the plugin registers its slots, keybinds and palette commands', () => {
   page = setup()
 
-  assert.equal(mod.default.id, 'sidenote')
+  assert.equal(mod.default.id, 'hermes-action-bar')
   assert.equal(page.area('composer.top').length, 1)
   assert.equal(page.area('composer.middleware').length, 1)
   assert.deepEqual(
     page.area('keybinds').map(c => [c.data.id, c.data.defaults[0]]),
     [
-      ['sidenote.reply', 'mod+alt+r'],
-      ['sidenote.ask', 'mod+alt+a'],
-      ['sidenote.explain', 'mod+alt+e']
+      ['hermes-action-bar.reply', 'mod+alt+r'],
+      ['hermes-action-bar.ask', 'mod+alt+a'],
+      ['hermes-action-bar.explain', 'mod+alt+e']
     ]
   )
   assert.equal(page.area('palette').length, 3)
-  assert.equal(page.settingsPage().title, 'Sidenote')
+  assert.equal(page.settingsPage().title, 'Action Bar')
 })
 
 test('a keybind acts on the live selection, without the bar', async () => {
@@ -621,7 +621,7 @@ test('a keybind acts on the live selection, without the bar', async () => {
   page.select(page.byId('p2'))
 
   page.area('keybinds')[0].data.run()
-  assert.equal(page.card().querySelector('.sn-quote').textContent, P2)
+  assert.equal(page.card().querySelector('.hab-quote').textContent, P2)
 
   await page.click(page.button(page.card(), 'Close'))
   page.window.getSelection().removeAllRanges()
@@ -645,8 +645,8 @@ test('dispose removes every element, style and listener', async () => {
   await page.dispose()
   page = null
 
-  assert.equal(doc.querySelector('[data-sidenote]'), null)
-  assert.equal(doc.getElementById('sidenote-style'), null)
+  assert.equal(doc.querySelector('[data-hermes-action-bar]'), null)
+  assert.equal(doc.getElementById('hermes-action-bar-style'), null)
   assert.equal(window.CSS.highlights.size, 0)
   assert.deepEqual(mod.$replies.get(), {})
 })

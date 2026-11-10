@@ -1,5 +1,5 @@
 /**
- * Sidenote - reply to a highlight, or ask about it, without moving the chat.
+ * Action Bar - reply to a highlight, or ask about it, without moving the chat.
  *
  * Select text in a chat and a small bar appears at the selection:
  *
@@ -34,20 +34,20 @@ import * as sdk from '@hermes/plugin-sdk'
 import * as React from 'react'
 import { jsx, jsxs } from 'react/jsx-runtime'
 
-export const ID = 'sidenote'
+export const ID = 'hermes-action-bar'
 export const VERSION = '0.1.0'
 
 const host = sdk.host
 
-const UI_ATTR = 'data-sidenote'
+const UI_ATTR = 'data-hermes-action-bar'
 const EDITABLE = '[contenteditable="true"], [contenteditable=""], input, textarea'
 // Documented in the Desktop SDK guide as the chat surface root (one per chat
 // or tile). When no element carries it, the bar falls back to any selection
 // outside an input, so a renamed attribute degrades the plugin instead of
 // silently turning it off.
 const CHAT_SURFACE = '[data-chat-surface]'
-const HIGHLIGHT_NAME = 'sidenote-active'
-const STYLE_ID = 'sidenote-style'
+const HIGHLIGHT_NAME = 'hermes-action-bar-active'
+const STYLE_ID = 'hermes-action-bar-style'
 
 const QUOTE_MAX = 6000
 const CONTEXT_MAX = 4000
@@ -98,7 +98,7 @@ const STR = {
   slashBlocked: 'The draft is a slash command. Remove it to send the replies.',
   sendFailed: 'Hermes did not accept the message. The replies are kept.',
   noSelection: 'Select text in a chat first.',
-  settingsTitle: 'Sidenote',
+  settingsTitle: 'Action Bar',
   actionsHeading: 'Actions',
   actionsHelp:
     'Each action is a button on the bar. Its prompt is the question that the model answers about the highlighted text. The first three show on the bar. The others are behind the arrow.',
@@ -182,7 +182,7 @@ export const clip = (text, max) => (text.length > max ? `${text.slice(0, max).tr
 
 const clamp = (value, min, max) => Math.min(Math.max(value, min), Math.max(min, max))
 
-const uid = () => globalThis.crypto?.randomUUID?.() ?? `sn-${Date.now()}-${Math.random().toString(36).slice(2)}`
+const uid = () => globalThis.crypto?.randomUUID?.() ?? `hab-${Date.now()}-${Math.random().toString(36).slice(2)}`
 
 const elementOf = node => (node ? (node.nodeType === 1 ? node : node.parentElement) : null)
 
@@ -615,7 +615,7 @@ function renderInline(parent, text, onLink) {
       const url = match[7]
 
       el = doc.createElement('span')
-      el.className = 'sn-link'
+      el.className = 'hab-link'
       el.textContent = match[6]
       el.title = url
       el.setAttribute('role', 'link')
@@ -711,7 +711,7 @@ export function renderMarkdown(text, doc, onLink) {
 
     if (heading) {
       endBlocks()
-      block('div', heading[1], 'sn-heading')
+      block('div', heading[1], 'hab-heading')
       continue
     }
 
@@ -847,71 +847,71 @@ function Icon({ name }) {
 // ---------------------------------------------------------------------------
 
 const STYLE = `
-.sn-bar,.sn-card{position:fixed;font:inherit;-webkit-font-smoothing:antialiased;box-sizing:border-box}
-.sn-bar *,.sn-card *,.sn-strip *,.sn-settings *{box-sizing:border-box}
-.sn-bar{z-index:2147483000;display:none;align-items:center;gap:2px;height:36px;padding:0 5px;max-width:calc(100vw - 16px);border-radius:9999px;border:1px solid var(--ui-stroke-secondary);background:var(--ui-bg-elevated);color:var(--ui-text-secondary);box-shadow:0 8px 28px rgb(0 0 0 / .28);font-size:12.5px;font-weight:500;line-height:1;white-space:nowrap;user-select:none;-webkit-user-select:none;animation:sn-in .12s ease-out}
-.sn-bar button{all:unset;display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 9px;border-radius:9999px;cursor:pointer;color:inherit}
-.sn-bar button:hover,.sn-bar button:focus-visible{background:var(--ui-control-hover-background);color:var(--ui-text-primary)}
-.sn-bar button.sn-primary{color:var(--ui-text-primary)}
-.sn-bar button.sn-icon-only{padding:0 7px}
-.sn-sep{flex:none;width:1px;height:16px;margin:0 3px;background:var(--ui-stroke-secondary)}
-.sn-card{z-index:2147482999;display:flex;flex-direction:column;overflow:hidden;border-radius:12px;border:1px solid var(--ui-stroke-secondary);background:var(--ui-bg-elevated);color:var(--ui-text-primary);box-shadow:0 12px 40px rgb(0 0 0 / .32);font-size:13px;line-height:1.5;animation:sn-in .12s ease-out}
-.sn-head{display:flex;align-items:center;gap:7px;padding:8px 8px 6px 12px;color:var(--ui-text-secondary);font-size:12px;font-weight:600}
-.sn-title{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.sn-quote{flex:none;margin:0 12px 8px;padding:1px 0 1px 9px;border-left:2px solid var(--ui-accent);color:var(--ui-text-tertiary);font-size:12px;line-height:1.45;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden;overflow-wrap:anywhere;white-space:pre-wrap}
-.sn-thread{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:0 12px}
-.sn-thread:empty{display:none}
-.sn-q{align-self:flex-end;max-width:88%;padding:4px 10px;border-radius:10px;background:var(--ui-bg-quinary);color:var(--ui-text-secondary);font-size:12px;overflow-wrap:anywhere;white-space:pre-wrap}
-.sn-a{overflow-wrap:anywhere;user-select:text;-webkit-user-select:text}
-.sn-a>:first-child{margin-top:0}
-.sn-a>:last-child{margin-bottom:0}
-.sn-a p,.sn-a ul,.sn-a ol,.sn-a pre,.sn-a blockquote{margin:0 0 7px}
-.sn-a ul,.sn-a ol{padding-left:19px}
-.sn-a li{margin:1px 0}
-.sn-a code{padding:1px 4px;border-radius:4px;background:var(--ui-inline-code-background);font-size:.92em}
-.sn-a pre{padding:8px 10px;border-radius:8px;background:var(--ui-bg-quinary);font-size:12px;line-height:1.45;overflow-x:auto;white-space:pre}
-.sn-a blockquote{padding-left:9px;border-left:2px solid var(--ui-stroke-secondary);color:var(--ui-text-secondary)}
-.sn-heading{margin:0 0 4px;font-weight:600}
-.sn-link{color:var(--ui-accent);cursor:pointer;text-decoration:underline;text-underline-offset:2px}
-.sn-pending{display:inline-flex;align-items:center;gap:7px;color:var(--ui-text-tertiary);font-size:12px}
-.sn-dots{display:inline-flex;gap:3px}
-.sn-dots i{width:4px;height:4px;border-radius:50%;background:currentColor;animation:sn-dot 1s ease-in-out infinite}
-.sn-dots i:nth-child(2){animation-delay:.15s}
-.sn-dots i:nth-child(3){animation-delay:.3s}
-.sn-error{display:flex;align-items:center;gap:8px;color:var(--ui-red);font-size:12px}
-.sn-note{flex:none;padding:7px 12px 0;color:var(--ui-text-quaternary);font-size:11px}
-.sn-foot{flex:none;display:flex;align-items:flex-end;gap:6px;padding:8px}
-.sn-input{flex:1;min-width:0;max-height:96px;resize:none;padding:6px 9px;border-radius:8px;border:1px solid var(--ui-stroke-secondary);background:transparent;color:var(--ui-text-primary);font:inherit;font-size:13px;line-height:1.4;outline:none}
-.sn-input:focus{border-color:var(--ui-accent)}
-.sn-input::placeholder{color:var(--ui-text-quaternary)}
-.sn-btn{all:unset;flex:none;display:inline-flex;align-items:center;gap:5px;height:28px;padding:0 9px;border-radius:7px;border:1px solid var(--ui-stroke-secondary);color:var(--ui-text-secondary);font-size:12px;font-weight:500;line-height:1;white-space:nowrap;cursor:pointer}
-.sn-btn:hover,.sn-btn:focus-visible{background:var(--ui-control-hover-background);color:var(--ui-text-primary)}
-.sn-btn[disabled]{opacity:.5;cursor:default}
-.sn-btn.sn-accent{border-color:color-mix(in srgb,var(--ui-accent) 45%,transparent);background:color-mix(in srgb,var(--ui-accent) 22%,transparent);color:var(--ui-text-primary)}
-.sn-btn.sn-accent:hover,.sn-btn.sn-accent:focus-visible{background:color-mix(in srgb,var(--ui-accent) 32%,transparent);color:var(--ui-text-primary)}
-.sn-ghost{all:unset;flex:none;display:inline-grid;place-items:center;width:24px;height:24px;border-radius:6px;color:var(--ui-text-tertiary);cursor:pointer}
-.sn-ghost:hover,.sn-ghost:focus-visible{background:var(--ui-control-hover-background);color:var(--ui-text-primary)}
-.sn-strip{display:flex;flex-direction:column;gap:6px;width:100%;padding:2px 0 6px}
-.sn-strip-head{display:flex;align-items:center;gap:8px;color:var(--ui-text-tertiary);font-size:11.5px}
-.sn-strip-count{color:var(--ui-text-secondary);font-weight:600}
-.sn-strip-hint{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.sn-reply{display:flex;align-items:flex-start;gap:8px;padding:6px 6px 6px 10px;border-radius:9px;border:1px solid var(--ui-stroke-tertiary);background:var(--ui-bg-quinary)}
-.sn-reply-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
-.sn-reply-quote{padding-left:8px;border-left:2px solid var(--ui-accent);color:var(--ui-text-tertiary);font-size:12px;line-height:1.4;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;overflow-wrap:anywhere;white-space:pre-wrap}
-.sn-reply-comment{width:100%;resize:none;padding:0;border:0;background:transparent;color:var(--ui-text-primary);font:inherit;font-size:13px;line-height:1.4;outline:none}
-.sn-reply-comment::placeholder{color:var(--ui-text-quaternary)}
-.sn-settings{display:flex;flex-direction:column;gap:18px;max-width:640px;font-size:13px;color:var(--ui-text-primary)}
-.sn-settings h3{margin:0 0 4px;font-size:13px;font-weight:600}
-.sn-settings p{margin:0 0 10px;color:var(--ui-text-tertiary);font-size:12px;line-height:1.5}
-.sn-row{display:flex;align-items:flex-start;gap:8px;margin-bottom:8px}
-.sn-row .sn-input{flex:none;width:150px}
-.sn-row textarea.sn-input{flex:1;width:auto;max-height:160px}
-.sn-tools{display:flex;flex-wrap:wrap;gap:8px}
-.sn-choice{display:flex;align-items:center;gap:8px;margin-bottom:6px;cursor:pointer}
+.hab-bar,.hab-card{position:fixed;font:inherit;-webkit-font-smoothing:antialiased;box-sizing:border-box}
+.hab-bar *,.hab-card *,.hab-strip *,.hab-settings *{box-sizing:border-box}
+.hab-bar{z-index:2147483000;display:none;align-items:center;gap:2px;height:36px;padding:0 5px;max-width:calc(100vw - 16px);border-radius:9999px;border:1px solid var(--ui-stroke-secondary);background:var(--ui-bg-elevated);color:var(--ui-text-secondary);box-shadow:0 8px 28px rgb(0 0 0 / .28);font-size:12.5px;font-weight:500;line-height:1;white-space:nowrap;user-select:none;-webkit-user-select:none;animation:hab-in .12s ease-out}
+.hab-bar button{all:unset;display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 9px;border-radius:9999px;cursor:pointer;color:inherit}
+.hab-bar button:hover,.hab-bar button:focus-visible{background:var(--ui-control-hover-background);color:var(--ui-text-primary)}
+.hab-bar button.hab-primary{color:var(--ui-text-primary)}
+.hab-bar button.hab-icon-only{padding:0 7px}
+.hab-sep{flex:none;width:1px;height:16px;margin:0 3px;background:var(--ui-stroke-secondary)}
+.hab-card{z-index:2147482999;display:flex;flex-direction:column;overflow:hidden;border-radius:12px;border:1px solid var(--ui-stroke-secondary);background:var(--ui-bg-elevated);color:var(--ui-text-primary);box-shadow:0 12px 40px rgb(0 0 0 / .32);font-size:13px;line-height:1.5;animation:hab-in .12s ease-out}
+.hab-head{display:flex;align-items:center;gap:7px;padding:8px 8px 6px 12px;color:var(--ui-text-secondary);font-size:12px;font-weight:600}
+.hab-title{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hab-quote{flex:none;margin:0 12px 8px;padding:1px 0 1px 9px;border-left:2px solid var(--ui-accent);color:var(--ui-text-tertiary);font-size:12px;line-height:1.45;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden;overflow-wrap:anywhere;white-space:pre-wrap}
+.hab-thread{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:0 12px}
+.hab-thread:empty{display:none}
+.hab-q{align-self:flex-end;max-width:88%;padding:4px 10px;border-radius:10px;background:var(--ui-bg-quinary);color:var(--ui-text-secondary);font-size:12px;overflow-wrap:anywhere;white-space:pre-wrap}
+.hab-a{overflow-wrap:anywhere;user-select:text;-webkit-user-select:text}
+.hab-a>:first-child{margin-top:0}
+.hab-a>:last-child{margin-bottom:0}
+.hab-a p,.hab-a ul,.hab-a ol,.hab-a pre,.hab-a blockquote{margin:0 0 7px}
+.hab-a ul,.hab-a ol{padding-left:19px}
+.hab-a li{margin:1px 0}
+.hab-a code{padding:1px 4px;border-radius:4px;background:var(--ui-inline-code-background);font-size:.92em}
+.hab-a pre{padding:8px 10px;border-radius:8px;background:var(--ui-bg-quinary);font-size:12px;line-height:1.45;overflow-x:auto;white-space:pre}
+.hab-a blockquote{padding-left:9px;border-left:2px solid var(--ui-stroke-secondary);color:var(--ui-text-secondary)}
+.hab-heading{margin:0 0 4px;font-weight:600}
+.hab-link{color:var(--ui-accent);cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+.hab-pending{display:inline-flex;align-items:center;gap:7px;color:var(--ui-text-tertiary);font-size:12px}
+.hab-dots{display:inline-flex;gap:3px}
+.hab-dots i{width:4px;height:4px;border-radius:50%;background:currentColor;animation:hab-dot 1s ease-in-out infinite}
+.hab-dots i:nth-child(2){animation-delay:.15s}
+.hab-dots i:nth-child(3){animation-delay:.3s}
+.hab-error{display:flex;align-items:center;gap:8px;color:var(--ui-red);font-size:12px}
+.hab-note{flex:none;padding:7px 12px 0;color:var(--ui-text-quaternary);font-size:11px}
+.hab-foot{flex:none;display:flex;align-items:flex-end;gap:6px;padding:8px}
+.hab-input{flex:1;min-width:0;max-height:96px;resize:none;padding:6px 9px;border-radius:8px;border:1px solid var(--ui-stroke-secondary);background:transparent;color:var(--ui-text-primary);font:inherit;font-size:13px;line-height:1.4;outline:none}
+.hab-input:focus{border-color:var(--ui-accent)}
+.hab-input::placeholder{color:var(--ui-text-quaternary)}
+.hab-btn{all:unset;flex:none;display:inline-flex;align-items:center;gap:5px;height:28px;padding:0 9px;border-radius:7px;border:1px solid var(--ui-stroke-secondary);color:var(--ui-text-secondary);font-size:12px;font-weight:500;line-height:1;white-space:nowrap;cursor:pointer}
+.hab-btn:hover,.hab-btn:focus-visible{background:var(--ui-control-hover-background);color:var(--ui-text-primary)}
+.hab-btn[disabled]{opacity:.5;cursor:default}
+.hab-btn.hab-accent{border-color:color-mix(in srgb,var(--ui-accent) 45%,transparent);background:color-mix(in srgb,var(--ui-accent) 22%,transparent);color:var(--ui-text-primary)}
+.hab-btn.hab-accent:hover,.hab-btn.hab-accent:focus-visible{background:color-mix(in srgb,var(--ui-accent) 32%,transparent);color:var(--ui-text-primary)}
+.hab-ghost{all:unset;flex:none;display:inline-grid;place-items:center;width:24px;height:24px;border-radius:6px;color:var(--ui-text-tertiary);cursor:pointer}
+.hab-ghost:hover,.hab-ghost:focus-visible{background:var(--ui-control-hover-background);color:var(--ui-text-primary)}
+.hab-strip{display:flex;flex-direction:column;gap:6px;width:100%;padding:2px 0 6px}
+.hab-strip-head{display:flex;align-items:center;gap:8px;color:var(--ui-text-tertiary);font-size:11.5px}
+.hab-strip-count{color:var(--ui-text-secondary);font-weight:600}
+.hab-strip-hint{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hab-reply{display:flex;align-items:flex-start;gap:8px;padding:6px 6px 6px 10px;border-radius:9px;border:1px solid var(--ui-stroke-tertiary);background:var(--ui-bg-quinary)}
+.hab-reply-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.hab-reply-quote{padding-left:8px;border-left:2px solid var(--ui-accent);color:var(--ui-text-tertiary);font-size:12px;line-height:1.4;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;overflow-wrap:anywhere;white-space:pre-wrap}
+.hab-reply-comment{width:100%;resize:none;padding:0;border:0;background:transparent;color:var(--ui-text-primary);font:inherit;font-size:13px;line-height:1.4;outline:none}
+.hab-reply-comment::placeholder{color:var(--ui-text-quaternary)}
+.hab-settings{display:flex;flex-direction:column;gap:18px;max-width:640px;font-size:13px;color:var(--ui-text-primary)}
+.hab-settings h3{margin:0 0 4px;font-size:13px;font-weight:600}
+.hab-settings p{margin:0 0 10px;color:var(--ui-text-tertiary);font-size:12px;line-height:1.5}
+.hab-row{display:flex;align-items:flex-start;gap:8px;margin-bottom:8px}
+.hab-row .hab-input{flex:none;width:150px}
+.hab-row textarea.hab-input{flex:1;width:auto;max-height:160px}
+.hab-tools{display:flex;flex-wrap:wrap;gap:8px}
+.hab-choice{display:flex;align-items:center;gap:8px;margin-bottom:6px;cursor:pointer}
 ::highlight(${HIGHLIGHT_NAME}){background-color:color-mix(in srgb,var(--ui-accent) 30%,transparent)}
-@keyframes sn-in{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
-@keyframes sn-dot{0%,80%,100%{opacity:.25}40%{opacity:1}}
-@media (prefers-reduced-motion:reduce){.sn-bar,.sn-card,.sn-dots i{animation:none}}
+@keyframes hab-in{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
+@keyframes hab-dot{0%,80%,100%{opacity:.25}40%{opacity:1}}
+@media (prefers-reduced-motion:reduce){.hab-bar,.hab-card,.hab-dots i{animation:none}}
 `
 
 // ---------------------------------------------------------------------------
@@ -933,14 +933,14 @@ const keepKeysLocal = event => {
 
 function ReplyRow({ reply, sessionKey }) {
   return jsxs('div', {
-    className: 'sn-reply',
+    className: 'hab-reply',
     children: [
       jsxs('div', {
-        className: 'sn-reply-body',
+        className: 'hab-reply-body',
         children: [
-          jsx('div', { className: 'sn-reply-quote', title: reply.quote, children: reply.quote }),
+          jsx('div', { className: 'hab-reply-quote', title: reply.quote, children: reply.quote }),
           jsx('textarea', {
-            className: 'sn-reply-comment',
+            className: 'hab-reply-comment',
             'aria-label': STR.commentPlaceholder,
             placeholder: STR.commentPlaceholder,
             rows: Math.min(4, Math.max(1, reply.comment.split('\n').length)),
@@ -959,7 +959,7 @@ function ReplyRow({ reply, sessionKey }) {
       }),
       jsx('button', {
         type: 'button',
-        className: 'sn-ghost',
+        className: 'hab-ghost',
         'aria-label': STR.remove,
         title: STR.remove,
         onClick: () => removeReply(sessionKey, reply.id),
@@ -980,20 +980,20 @@ export function ReplyStrip() {
   }
 
   return jsxs('div', {
-    className: 'sn-strip',
+    className: 'hab-strip',
     [UI_ATTR]: 'strip',
     children: [
       jsxs('div', {
-        className: 'sn-strip-head',
+        className: 'hab-strip-head',
         children: [
           jsx('span', {
-            className: 'sn-strip-count',
+            className: 'hab-strip-count',
             children: list.length === 1 ? STR.stripOne : STR.stripMany(list.length)
           }),
-          jsx('span', { className: 'sn-strip-hint', children: busy ? STR.stripBusyHint : STR.stripHint }),
+          jsx('span', { className: 'hab-strip-hint', children: busy ? STR.stripBusyHint : STR.stripHint }),
           jsxs('button', {
             type: 'button',
-            className: 'sn-btn',
+            className: 'hab-btn',
             onClick: () => void sendNow(sessionKey),
             children: [jsx(Icon, { name: 'send' }), STR.sendNow]
           })
@@ -1052,7 +1052,7 @@ export function SettingsPage() {
   const full = rows.length >= ACTIONS_MAX
 
   return jsxs('div', {
-    className: 'sn-settings',
+    className: 'hab-settings',
     [UI_ATTR]: 'settings',
     children: [
       jsxs('section', {
@@ -1063,10 +1063,10 @@ export function SettingsPage() {
             jsxs(
               'div',
               {
-                className: 'sn-row',
+                className: 'hab-row',
                 children: [
                   jsx('input', {
-                    className: 'sn-input',
+                    className: 'hab-input',
                     'aria-label': STR.labelPlaceholder,
                     placeholder: STR.labelPlaceholder,
                     maxLength: LABEL_MAX,
@@ -1075,7 +1075,7 @@ export function SettingsPage() {
                     onKeyDown: keepKeysLocal
                   }),
                   jsx('textarea', {
-                    className: 'sn-input',
+                    className: 'hab-input',
                     'aria-label': STR.promptPlaceholder,
                     placeholder: STR.promptPlaceholder,
                     maxLength: PROMPT_MAX,
@@ -1086,7 +1086,7 @@ export function SettingsPage() {
                   }),
                   jsx('button', {
                     type: 'button',
-                    className: 'sn-ghost',
+                    className: 'hab-ghost',
                     'aria-label': STR.moveUp,
                     title: STR.moveUp,
                     disabled: index === 0,
@@ -1096,7 +1096,7 @@ export function SettingsPage() {
                   }),
                   jsx('button', {
                     type: 'button',
-                    className: 'sn-ghost',
+                    className: 'hab-ghost',
                     'aria-label': STR.removeAction,
                     title: STR.removeAction,
                     onClick: () => apply(rows.filter(other => other.id !== row.id)),
@@ -1108,11 +1108,11 @@ export function SettingsPage() {
             )
           ),
           jsxs('div', {
-            className: 'sn-tools',
+            className: 'hab-tools',
             children: [
               jsxs('button', {
                 type: 'button',
-                className: 'sn-btn',
+                className: 'hab-btn',
                 disabled: full,
                 title: full ? STR.full : undefined,
                 onClick: () => apply([...rows, { id: uid(), label: '', prompt: '', icon: 'bulb' }]),
@@ -1120,7 +1120,7 @@ export function SettingsPage() {
               }),
               jsx('button', {
                 type: 'button',
-                className: 'sn-btn',
+                className: 'hab-btn',
                 disabled: full,
                 title: full ? STR.full : undefined,
                 onClick: () => addMany(RESEARCH_ACTIONS),
@@ -1128,7 +1128,7 @@ export function SettingsPage() {
               }),
               jsx('button', {
                 type: 'button',
-                className: 'sn-btn',
+                className: 'hab-btn',
                 onClick: () => apply(DEFAULT_ACTIONS.map(action => ({ ...action }))),
                 children: STR.reset
               })
@@ -1146,11 +1146,11 @@ export function SettingsPage() {
             jsxs(
               'label',
               {
-                className: 'sn-choice',
+                className: 'hab-choice',
                 children: [
                   jsx('input', {
                     type: 'radio',
-                    name: 'sidenote-scope',
+                    name: 'hermes-action-bar-scope',
                     checked: prefs.everywhere === value,
                     onChange: () => savePrefs({ ...prefs, everywhere: value })
                   }),
@@ -1209,7 +1209,7 @@ function createUi(ctx, doc, view) {
   style.textContent = STYLE
   doc.head.append(style)
 
-  const bar = el(doc, 'div', { class: 'sn-bar', role: 'toolbar', 'aria-label': 'Sidenote', [UI_ATTR]: 'bar' })
+  const bar = el(doc, 'div', { class: 'hab-bar', role: 'toolbar', 'aria-label': 'Action Bar', [UI_ATTR]: 'bar' })
 
   doc.body.append(bar)
 
@@ -1249,7 +1249,7 @@ function createUi(ctx, doc, view) {
       'button',
       {
         type: 'button',
-        class: [primary && 'sn-primary', iconOnly && 'sn-icon-only'].filter(Boolean).join(' ') || undefined,
+        class: [primary && 'hab-primary', iconOnly && 'hab-icon-only'].filter(Boolean).join(' ') || undefined,
         title: iconOnly ? label : undefined,
         'aria-label': iconOnly ? label : undefined
       },
@@ -1267,7 +1267,7 @@ function createUi(ctx, doc, view) {
     return button
   }
 
-  const separator = () => el(doc, 'span', { class: 'sn-sep', 'aria-hidden': 'true' })
+  const separator = () => el(doc, 'span', { class: 'hab-sep', 'aria-hidden': 'true' })
 
   const buildBar = () => {
     const actions = $actions.get()
@@ -1473,14 +1473,14 @@ function createUi(ctx, doc, view) {
   }
 
   const iconButton = (icon, label, run) => {
-    const button = el(doc, 'button', { type: 'button', class: 'sn-ghost', title: label, 'aria-label': label }, iconEl(doc, icon))
+    const button = el(doc, 'button', { type: 'button', class: 'hab-ghost', title: label, 'aria-label': label }, iconEl(doc, icon))
 
     button.addEventListener('click', run)
 
     return button
   }
 
-  const textButton = (icon, label, run, className = 'sn-btn') => {
+  const textButton = (icon, label, run, className = 'hab-btn') => {
     const button = el(doc, 'button', { type: 'button', class: className }, icon ? iconEl(doc, icon) : null, el(doc, 'span', { text: label }))
 
     button.addEventListener('click', run)
@@ -1489,7 +1489,7 @@ function createUi(ctx, doc, view) {
   }
 
   const inputBox = (placeholder, onEnter) => {
-    const input = el(doc, 'textarea', { class: 'sn-input', rows: 1, placeholder, 'aria-label': placeholder })
+    const input = el(doc, 'textarea', { class: 'hab-input', rows: 1, placeholder, 'aria-label': placeholder })
 
     input.addEventListener('keydown', event => {
       keepKeysLocal(event)
@@ -1510,16 +1510,16 @@ function createUi(ctx, doc, view) {
   const openCard = (mode, found, title, icon) => {
     closeCard()
 
-    const root = el(doc, 'div', { class: 'sn-card', role: 'dialog', 'aria-label': title, [UI_ATTR]: 'card' })
+    const root = el(doc, 'div', { class: 'hab-card', role: 'dialog', 'aria-label': title, [UI_ATTR]: 'card' })
     const head = el(
       doc,
       'div',
-      { class: 'sn-head' },
+      { class: 'hab-head' },
       iconEl(doc, icon),
-      el(doc, 'span', { class: 'sn-title', text: title }),
+      el(doc, 'span', { class: 'hab-title', text: title }),
       iconButton('close', STR.close, closeCard)
     )
-    const quote = el(doc, 'div', { class: 'sn-quote', title: found.text, text: found.text })
+    const quote = el(doc, 'div', { class: 'hab-quote', title: found.text, text: found.text })
 
     root.append(head, quote)
     doc.body.append(root)
@@ -1556,8 +1556,8 @@ function createUi(ctx, doc, view) {
     const input = inputBox(STR.replyPlaceholder, commit)
 
     root.append(
-      el(doc, 'div', { class: 'sn-foot' }, input, textButton('reply', STR.addReply, commit, 'sn-btn sn-accent')),
-      el(doc, 'div', { class: 'sn-note', style: 'padding:0 12px 9px', text: STR.replyHint })
+      el(doc, 'div', { class: 'hab-foot' }, input, textButton('reply', STR.addReply, commit, 'hab-btn hab-accent')),
+      el(doc, 'div', { class: 'hab-note', style: 'padding:0 12px 9px', text: STR.replyHint })
     )
 
     placeCard()
@@ -1575,7 +1575,7 @@ function createUi(ctx, doc, view) {
     }
 
     const root = openCard('answer', found, title, icon)
-    const threadEl = el(doc, 'div', { class: 'sn-thread' })
+    const threadEl = el(doc, 'div', { class: 'hab-thread' })
     const input = inputBox(STR.askPlaceholder, () => {
       const question = input.value.trim()
 
@@ -1594,12 +1594,12 @@ function createUi(ctx, doc, view) {
         ctx.setTimeout(() => copy.isConnected && copy.replaceChildren(iconEl(doc, 'copy')), 900)
       }
     })
-    const tools = el(doc, 'div', { class: 'sn-foot', style: 'padding-top:0;display:none;justify-content:flex-end' }, copy, promote)
+    const tools = el(doc, 'div', { class: 'hab-foot', style: 'padding-top:0;display:none;justify-content:flex-end' }, copy, promote)
 
     root.append(
       threadEl,
-      el(doc, 'div', { class: 'sn-note', text: STR.cardNote }),
-      el(doc, 'div', { class: 'sn-foot' }, input),
+      el(doc, 'div', { class: 'hab-note', text: STR.cardNote }),
+      el(doc, 'div', { class: 'hab-foot' }, input),
       tools
     )
 
@@ -1640,7 +1640,7 @@ function createUi(ctx, doc, view) {
     thread.turns.forEach((turn, index) => {
       // The first turn of a fixed action is named by the card title already.
       if (index > 0 || turn.label === turn.prompt) {
-        nodes.push(el(doc, 'div', { class: 'sn-q', text: turn.label }))
+        nodes.push(el(doc, 'div', { class: 'hab-q', text: turn.label }))
       }
 
       if (turn.status === 'pending') {
@@ -1648,9 +1648,9 @@ function createUi(ctx, doc, view) {
           el(
             doc,
             'div',
-            { class: 'sn-pending', role: 'status' },
+            { class: 'hab-pending', role: 'status' },
             el(doc, 'span', { text: STR.thinking }),
-            el(doc, 'span', { class: 'sn-dots', 'aria-hidden': 'true' }, el(doc, 'i'), el(doc, 'i'), el(doc, 'i'))
+            el(doc, 'span', { class: 'hab-dots', 'aria-hidden': 'true' }, el(doc, 'i'), el(doc, 'i'), el(doc, 'i'))
           )
         )
       } else if (turn.status === 'error') {
@@ -1658,7 +1658,7 @@ function createUi(ctx, doc, view) {
           el(
             doc,
             'div',
-            { class: 'sn-error', role: 'alert' },
+            { class: 'hab-error', role: 'alert' },
             el(doc, 'span', { text: turn.error }),
             textButton(null, STR.retry, () => {
               thread.turns.splice(thread.turns.indexOf(turn), 1)
@@ -1667,7 +1667,7 @@ function createUi(ctx, doc, view) {
           )
         )
       } else {
-        const answer = el(doc, 'div', { class: 'sn-a' })
+        const answer = el(doc, 'div', { class: 'hab-a' })
 
         answer.append(renderMarkdown(turn.answer, doc, openLink))
         nodes.push(answer)
@@ -1869,7 +1869,7 @@ function loadSettings(ctx) {
 
 export default {
   id: ID,
-  name: 'Sidenote',
+  name: 'Action Bar',
   description: 'Reply to a highlight, or ask about it in a card that stays out of the chat.',
   register(ctx) {
     $replies.set({})
@@ -1886,11 +1886,11 @@ export default {
     })
 
     const commands = [
-      { id: 'reply', label: 'Sidenote: Reply to selection', keys: ['mod+alt+r'], run: ui.openReply },
-      { id: 'ask', label: 'Sidenote: Ask about selection', keys: ['mod+alt+a'], run: ui.openAsk },
+      { id: 'reply', label: 'Action Bar: Reply to selection', keys: ['mod+alt+r'], run: ui.openReply },
+      { id: 'ask', label: 'Action Bar: Ask about selection', keys: ['mod+alt+a'], run: ui.openAsk },
       {
         id: 'explain',
-        label: 'Sidenote: Explain selection',
+        label: 'Action Bar: Explain selection',
         keys: ['mod+alt+e'],
         run: () => {
           const first = action('explain') ?? $actions.get()[0]
@@ -1907,7 +1907,7 @@ export default {
         data: {
           id: `${ID}.${command.id}`,
           label: command.label,
-          category: 'Sidenote',
+          category: 'Action Bar',
           defaults: command.keys,
           run: command.run
         }
@@ -1918,7 +1918,7 @@ export default {
         data: {
           id: `${ID}.${command.id}`,
           label: command.label,
-          keywords: ['sidenote', 'selection', 'highlight', 'quote', command.id],
+          keywords: ['hermes-action-bar', 'selection', 'highlight', 'quote', command.id],
           run: command.run
         }
       })
