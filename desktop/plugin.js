@@ -933,7 +933,7 @@ const STYLE = `
 .hab-settings p{margin:0 0 10px;color:var(--ui-text-tertiary);font-size:12px;line-height:1.5}
 .hab-row{display:flex;align-items:flex-start;gap:8px;margin-bottom:8px}
 .hab-row .hab-input{flex:none;width:150px}
-.hab-row textarea.hab-input{flex:1;width:auto;max-height:160px}
+.hab-row textarea.hab-input{flex:1;width:auto;max-height:160px;field-sizing:content}
 .hab-tools{display:flex;flex-wrap:wrap;gap:8px}
 .hab-choice{display:flex;align-items:center;gap:8px;margin-bottom:6px;cursor:pointer}
 ::highlight(${HIGHLIGHT_NAME}){background-color:color-mix(in srgb,var(--ui-accent) 30%,transparent)}
@@ -1757,7 +1757,9 @@ function createUi(ctx, doc, view) {
       return
     }
 
-    const text = `${quoteBlock(card.thread.quote)}\n\n${defuseRefs(`${answer.label}: ${answer.answer}`)}`
+    // A fixed action reads "Explain: ...". A typed question stands on its own line.
+    const lead = /[?.!]$/.test(answer.label) ? `${answer.label}\n\n` : `${answer.label}: `
+    const text = `${quoteBlock(card.thread.quote)}\n\n${defuseRefs(`${lead}${answer.answer}`)}`
     let ok = false
 
     try {

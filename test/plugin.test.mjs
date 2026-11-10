@@ -532,6 +532,17 @@ test('Send to chat puts the quote and the answer in the composer, and does not s
   assert.equal(page.card(), null)
 })
 
+test('Send to chat puts a typed question on its own line', async () => {
+  page = setup()
+  fake.oneshot = async () => ({ text: 'Three firms.' })
+  await page.highlight(page.byId('p2'))
+  await page.click(page.button(page.bar(), 'Ask'))
+  await page.type(page.card().querySelector('textarea'), 'Who starts it?')
+  await page.click(page.button(page.card(), 'Send to chat'))
+
+  assert.equal(fake.calls.insertText[0].text, `> ${page.byId('p2').textContent}\n\nWho starts it?\n\nThree firms.`)
+})
+
 test('model output is never parsed as HTML', () => {
   page = setup()
 
