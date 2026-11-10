@@ -1,0 +1,18 @@
+{
+  "name": "hermes-sidenote",
+  "version": "0.1.0",
+  "description": "Hermes Desktop plugin: reply to a highlight, or ask about it in an answer card that stays out of the chat.",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "check": "node --check desktop/plugin.js",
+    "test": "node --import ./test/register.mjs --test --test-reporter=spec test/*.test.mjs",
+    "install:local": "mkdir -p \"$HOME/.hermes/desktop-plugins/sidenote\" && cp desktop/plugin.js \"$HOME/.hermes/desktop-plugins/sidenote/plugin.js\""
+  },
+  "devDependencies": {
+    "jsdom": "29.1.1",
+    "react": "19.2.7",
+    "react-dom": "19.2.7"
+  }
+}
