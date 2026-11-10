@@ -156,6 +156,9 @@ export function setup(html = CHAT, { highlights = false, storage = {} } = {}) {
     },
     // Select a node and release the mouse, as a user does.
     async highlight(node, start, end) {
+      // A real drag starts with a mouse-down that collapses the old selection.
+      window.getSelection().removeAllRanges()
+      fire(doc, 'selectionchange')
       page.select(node, start, end)
       fire(node, 'mouseup')
       await tick()

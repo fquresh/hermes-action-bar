@@ -27,6 +27,7 @@ test('a selection in a chat shows the bar with the default actions', async () =>
 
   assert.equal(page.barVisible(), true)
   assert.deepEqual(page.barLabels(), ['Reply', 'Ask', 'Explain', 'Summarize', 'Fact-check', 'Copy'])
+  assert.equal(page.bar().textContent, 'ReplyAskExplainSummarizeFact-check', 'no stray text in the bar')
 })
 
 test('the bar sits above the selection, inside the window', async () => {
@@ -105,6 +106,28 @@ test('a mouse-down elsewhere, Escape, a scroll and a resize hide the bar', async
     hide()
     assert.equal(page.barVisible(), false)
   }
+})
+
+test('a dismissed bar does not come back for the same selection', async () => {
+  page = setup()
+  await page.highlight(page.byId('p1'))
+  page.fire(page.doc.body, 'keydown', { key: 'Escape' })
+  assert.equal(page.barVisible(), false)
+
+  // A click on an app button leaves the selection alive.
+  page.fire(page.byId('side'), 'mouseup')
+  await tick()
+  assert.equal(page.barVisible(), false)
+
+  // A new selection shows the bar again, and so does the same one made again.
+  await page.highlight(page.byId('p2'))
+  assert.equal(page.barVisible(), true)
+
+  page.fire(page.doc.body, 'keydown', { key: 'Escape' })
+  page.window.getSelection().removeAllRanges()
+  page.fire(page.doc, 'selectionchange')
+  await page.highlight(page.byId('p2'))
+  assert.equal(page.barVisible(), true)
 })
 
 test('Escape closes only the plugin UI: the app does not see the key', async () => {

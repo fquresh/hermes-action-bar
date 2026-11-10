@@ -8,9 +8,12 @@
   "scripts": {
     "check": "node --check desktop/plugin.js",
     "test": "node --import ./test/register.mjs --test --test-reporter=spec test/*.test.mjs",
-    "install:local": "mkdir -p \"$HOME/.hermes/desktop-plugins/sidenote\" && cp desktop/plugin.js \"$HOME/.hermes/desktop-plugins/sidenote/plugin.js\""
+    "install:local": "mkdir -p \"$HOME/.hermes/desktop-plugins/sidenote\" && cp desktop/plugin.js \"$HOME/.hermes/desktop-plugins/sidenote/plugin.js\"",
+    "harness:build": "esbuild test/harness/main.mjs --bundle --format=esm --alias:@hermes/plugin-sdk=./test/harness/sdk.mjs --define:process.env.NODE_ENV='\"development\"' --outfile=test/harness/dist/main.js",
+    "harness": "npm run harness:build && python3 -m http.server 4173 --directory test/harness"
   },
   "devDependencies": {
+    "esbuild": "0.28.2",
     "jsdom": "29.1.1",
     "react": "19.2.7",
     "react-dom": "19.2.7"

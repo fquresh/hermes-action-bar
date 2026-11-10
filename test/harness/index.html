@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sidenote harness</title>
+    <style>
+      /* Approximate Hermes Desktop theme variables. The plugin reads these. */
+      :root {
+        --ui-base: #17171a;
+        --ui-accent: #0053fd;
+        --ui-red: #cf2d56;
+        --chrome: #f3f3f4;
+        --ui-bg-elevated: #ffffff;
+        --ui-inline-code-background: color-mix(in srgb, #141414 5%, transparent);
+      }
+      :root.dark {
+        --ui-base: #ececf0;
+        --ui-accent: #6ea2ff;
+        --ui-red: #e75e78;
+        --chrome: #0d0d0e;
+        --ui-bg-elevated: #1d1d20;
+        --ui-inline-code-background: color-mix(in srgb, #ffffff 7%, transparent);
+      }
+      :root {
+        --ui-text-primary: color-mix(in srgb, var(--ui-base) 94%, transparent);
+        --ui-text-secondary: color-mix(in srgb, var(--ui-base) 74%, transparent);
+        --ui-text-tertiary: color-mix(in srgb, var(--ui-base) 54%, transparent);
+        --ui-text-quaternary: color-mix(in srgb, var(--ui-base) 36%, transparent);
+        --ui-bg-quinary: color-mix(in srgb, var(--ui-accent) 3%, color-mix(in srgb, var(--ui-base) 3%, transparent));
+        --ui-control-hover-background: color-mix(in srgb, var(--ui-accent) 6%, color-mix(in srgb, var(--ui-base) 4%, transparent));
+        --ui-stroke-secondary: color-mix(in srgb, var(--ui-accent) 16%, color-mix(in srgb, var(--ui-base) 7%, transparent));
+        --ui-stroke-tertiary: color-mix(in srgb, var(--ui-accent) 10%, color-mix(in srgb, var(--ui-base) 5%, transparent));
+      }
+      * { box-sizing: border-box; }
+      html, body { height: 100%; margin: 0; }
+      body {
+        display: flex;
+        background: var(--chrome);
+        color: var(--ui-text-primary);
+        font: 14px/1.6 -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      }
+      aside {
+        flex: none; width: 220px; padding: 14px;
+        border-right: 1px solid var(--ui-stroke-tertiary);
+        color: var(--ui-text-tertiary); font-size: 12.5px;
+      }
+      aside h1 { margin: 0 0 12px; font-size: 13px; color: var(--ui-text-secondary); }
+      aside button {
+        display: block; width: 100%; margin-bottom: 6px; padding: 6px 8px; text-align: left;
+        border: 1px solid var(--ui-stroke-secondary); border-radius: 7px;
+        background: transparent; color: var(--ui-text-secondary); font: inherit; cursor: pointer;
+      }
+      main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+      #scroll { flex: 1; min-height: 0; overflow-y: auto; }
+      #transcript { max-width: 760px; margin: 0 auto; padding: 28px 24px 12px; }
+      .msg { margin-bottom: 18px; }
+      .msg p, .msg blockquote { margin: 0 0 10px; }
+      .msg blockquote { padding-left: 10px; border-left: 2px solid var(--ui-stroke-secondary); color: var(--ui-text-secondary); }
+      .msg.user {
+        margin-left: auto; width: fit-content; max-width: 80%; padding: 8px 12px;
+        border-radius: 14px; background: var(--ui-bg-quinary); border: 1px solid var(--ui-stroke-tertiary);
+      }
+      .msg.user > :last-child { margin-bottom: 0; }
+      .composer {
+        flex: none; max-width: 760px; width: calc(100% - 48px); margin: 0 auto 18px; padding: 10px 12px;
+        border: 1px solid var(--ui-stroke-secondary); border-radius: 14px; background: var(--ui-bg-elevated);
+      }
+      #composer-input { min-height: 44px; outline: none; white-space: pre-wrap; }
+      #composer-input:empty::before { content: 'Message Hermes...'; color: var(--ui-text-quaternary); }
+      #settings-panel {
+        position: fixed; right: 16px; top: 16px; width: 560px; max-height: 80vh; overflow: auto; padding: 16px;
+        border: 1px solid var(--ui-stroke-secondary); border-radius: 12px; background: var(--ui-bg-elevated); z-index: 10;
+      }
+      #toasts { position: fixed; right: 16px; bottom: 16px; display: flex; flex-direction: column; gap: 6px; }
+      .toast { padding: 8px 12px; border-radius: 8px; background: var(--ui-bg-elevated); border: 1px solid var(--ui-stroke-secondary); font-size: 12.5px; }
+      .toast.error { border-color: var(--ui-red); }
+    </style>
+  </head>
+  <body>
+    <aside>
+      <h1>Sidenote harness</h1>
+      <p id="side-text">This page is a mock chat. It loads the real plugin file with a fake SDK.</p>
+      <button id="theme" type="button">Toggle theme</button>
+      <button id="busy" type="button">Toggle agent busy</button>
+      <button id="settings" type="button">Settings page</button>
+    </aside>
+    <main data-chat-surface="">
+      <div id="scroll">
+        <div id="transcript">
+          <div class="msg user" data-role="user"><p>Give me a short plan to move a small Postgres database to a new server with little downtime.</p></div>
+          <div class="msg assistant" data-role="assistant">
+            <p id="setup"><strong>Set up the new server.</strong> Install the same Postgres major version on the new server. Copy the configuration files, the users and the network rules, and check each one.</p>
+            <p id="replica"><strong>Start a baseline copy.</strong> Use pg_basebackup to put a full copy of the database on the new server. The old database keeps running while the copy is made.</p>
+            <p id="sync"><strong>Catch up with replication.</strong> Set up streaming replication from the old server to the new one. Wait until the replication lag is a few seconds or less.</p>
+            <p id="cutover"><strong>Cut over in a short pause.</strong> Stop the application writes and wait for the replica to catch up. Then point the application at the new server. The downtime is usually one to five minutes.</p>
+          </div>
+        </div>
+      </div>
+      <div class="composer">
+        <div id="composer-top"></div>
+        <div id="composer-input" contenteditable="true"></div>
+      </div>
+    </main>
+    <div id="settings-panel" hidden><div id="settings-slot"></div></div>
+    <div id="toasts"></div>
+    <script type="module" src="./dist/main.js"></script>
+  </body>
+</html>

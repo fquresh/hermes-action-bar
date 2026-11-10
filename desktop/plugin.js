@@ -188,6 +188,14 @@ const elementOf = node => (node ? (node.nodeType === 1 ? node : node.parentEleme
 
 const isSlashCommand = text => clean(text).trimStart().startsWith('/')
 
+const sameRange = (a, b) => {
+  try {
+    return a.compareBoundaryPoints(0, b) === 0 && a.compareBoundaryPoints(2, b) === 0
+  } catch {
+    return false
+  }
+}
+
 /**
  * Hermes turns `@file:`, `@url:` and other `@kind:` text into live context
  * references. Agent output can carry an injected `@file:` path to a private
@@ -829,7 +837,8 @@ function Icon({ name }) {
     strokeLinecap: 'round',
     strokeLinejoin: 'round',
     'aria-hidden': 'true',
-    children: (ICONS[name] ?? ICONS.bulb).map(([tag, attrs], index) => jsx(tag, attrs, index))
+    // A copy each time: React may add a dev-only `key` getter to a props object.
+    children: (ICONS[name] ?? ICONS.bulb).map(([tag, attrs], index) => jsx(tag, { ...attrs }, index))
   })
 }
 
@@ -872,14 +881,14 @@ const STYLE = `
 .sn-error{display:flex;align-items:center;gap:8px;color:var(--ui-red);font-size:12px}
 .sn-note{flex:none;padding:7px 12px 0;color:var(--ui-text-quaternary);font-size:11px}
 .sn-foot{flex:none;display:flex;align-items:flex-end;gap:6px;padding:8px}
-.sn-input{flex:1;min-width:0;max-height:96px;resize:none;padding:6px 9px;border-radius:8px;border:1px solid var(--ui-stroke-secondary);background:var(--ui-bg-input,transparent);color:var(--ui-text-primary);font:inherit;font-size:13px;line-height:1.4;outline:none}
+.sn-input{flex:1;min-width:0;max-height:96px;resize:none;padding:6px 9px;border-radius:8px;border:1px solid var(--ui-stroke-secondary);background:transparent;color:var(--ui-text-primary);font:inherit;font-size:13px;line-height:1.4;outline:none}
 .sn-input:focus{border-color:var(--ui-accent)}
 .sn-input::placeholder{color:var(--ui-text-quaternary)}
 .sn-btn{all:unset;flex:none;display:inline-flex;align-items:center;gap:5px;height:28px;padding:0 9px;border-radius:7px;border:1px solid var(--ui-stroke-secondary);color:var(--ui-text-secondary);font-size:12px;font-weight:500;line-height:1;white-space:nowrap;cursor:pointer}
 .sn-btn:hover,.sn-btn:focus-visible{background:var(--ui-control-hover-background);color:var(--ui-text-primary)}
 .sn-btn[disabled]{opacity:.5;cursor:default}
-.sn-btn.sn-accent{border-color:transparent;background:var(--ui-accent);color:var(--ui-bg-elevated)}
-.sn-btn.sn-accent:hover,.sn-btn.sn-accent:focus-visible{background:var(--ui-accent);color:var(--ui-bg-elevated);filter:brightness(1.08)}
+.sn-btn.sn-accent{border-color:color-mix(in srgb,var(--ui-accent) 45%,transparent);background:color-mix(in srgb,var(--ui-accent) 22%,transparent);color:var(--ui-text-primary)}
+.sn-btn.sn-accent:hover,.sn-btn.sn-accent:focus-visible{background:color-mix(in srgb,var(--ui-accent) 32%,transparent);color:var(--ui-text-primary)}
 .sn-ghost{all:unset;flex:none;display:inline-grid;place-items:center;width:24px;height:24px;border-radius:6px;color:var(--ui-text-tertiary);cursor:pointer}
 .sn-ghost:hover,.sn-ghost:focus-visible{background:var(--ui-control-hover-background);color:var(--ui-text-primary)}
 .sn-strip{display:flex;flex-direction:column;gap:6px;width:100%;padding:2px 0 6px}
@@ -1187,6 +1196,9 @@ function createUi(ctx, doc, view) {
   let disposed = false
   /** The selection the bar is about. Null while the bar is hidden. */
   let capture = null
+  /** The range the bar last showed for. A click on a button leaves the
+   *  selection alive, and the bar must not come back for it by itself. */
+  let seen = null
   let page = 0
   /** The open card: { mode, capture, thread, side, rect, parts }. */
   let card = null
@@ -1282,14 +1294,17 @@ function createUi(ctx, doc, view) {
     }
 
     page = 0
+    // replaceChildren would print a null as text, so absent parts are dropped.
     bar.replaceChildren(
-      barButton('reply', STR.reply, openReply, { primary: true }),
-      barButton('ask', STR.ask, openAsk),
-      shown.length ? separator() : null,
-      ...shown.map(actionButton),
-      rest.length ? barButton('next', STR.more, turnPage(1), { iconOnly: true }) : null,
-      separator(),
-      copy
+      ...[
+        barButton('reply', STR.reply, openReply, { primary: true }),
+        barButton('ask', STR.ask, openAsk),
+        shown.length ? separator() : null,
+        ...shown.map(actionButton),
+        rest.length ? barButton('next', STR.more, turnPage(1), { iconOnly: true }) : null,
+        separator(),
+        copy
+      ].filter(Boolean)
     )
   }
 
@@ -1337,7 +1352,12 @@ function createUi(ctx, doc, view) {
       return
     }
 
+    if (!capture && seen && sameRange(found.range, seen)) {
+      return
+    }
+
     capture = found
+    seen = found.range
     page = 0
     buildBar()
     placeBar()
@@ -1780,6 +1800,14 @@ function createUi(ctx, doc, view) {
     },
     true
   )
+  ctx.addEventListener(doc, 'selectionchange', () => {
+    // A collapsed selection ends the "already shown" memory, so the same
+    // words can be selected again. The bar itself does not hide here: the app
+    // can clear a selection that the user still means.
+    if (doc.getSelection?.()?.isCollapsed) {
+      seen = null
+    }
+  })
   ctx.addEventListener(view, 'resize', () => {
     hideBar()
     schedulePlaceCard()
