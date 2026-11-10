@@ -30,7 +30,10 @@ mock.oneshot = async params => {
   await new Promise(resolve => setTimeout(resolve, window.__harness.delay ?? 900))
 
   if (window.__harness.fail) {
-    throw new Error('one-shot generation failed: no provider configured')
+    // The shape of a real provider refusal, as Hermes passes it on.
+    throw new Error(
+      "one-shot generation failed: Error code: 403 - {'error': {'type': 'permission_error', 'message': 'An active subscription is required to use this model.'}}"
+    )
   }
 
   const question = params.input.match(/<question>\n([\s\S]*?)\n<\/question>/)?.[1] ?? ''

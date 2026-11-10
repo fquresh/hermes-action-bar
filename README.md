@@ -141,6 +141,7 @@ Two safety details:
 ## Limits
 
 - An answer arrives complete. It does not appear word by word, because `llm.oneshot` does not stream.
+- The card uses the model of the open chat. If that model has no valid login or subscription, the card shows the provider's error. Correct the model in Hermes, then click **Retry**.
 - The answer model has no tools and no web access. Fact-check tells you what to verify. Use **Send to chat** to let the agent verify it with its tools.
 - While the agent works, a typed Enter steers the turn and does not pass through plugin middleware ([hermes-agent#126917](https://github.com/NousResearch/hermes-agent/issues/126917)). The replies stay in the strip. Use the **Send** button to deliver them.
 - With several chat tiles open, the strip shows the replies of the chat that has focus.

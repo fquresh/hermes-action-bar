@@ -88,6 +88,8 @@ const STR = {
   retry: 'Retry',
   emptyAnswer: 'The model returned no text.',
   failed: 'The request failed.',
+  modelRefused: code => `The model refused the request (${code}).`,
+  modelHint: 'The card uses the model of the open chat. Check the login or the subscription of that model in Hermes.',
   stripOne: '1 reply',
   stripMany: n => `${n} replies`,
   stripHint: 'Sent with your next message.',
@@ -183,6 +185,31 @@ export const clip = (text, max) => (text.length > max ? `${text.slice(0, max).tr
 const clamp = (value, min, max) => Math.min(Math.max(value, min), Math.max(min, max))
 
 const uid = () => globalThis.crypto?.randomUUID?.() ?? `hab-${Date.now()}-${Math.random().toString(36).slice(2)}`
+
+/**
+ * Hermes passes a provider error on raw, for example
+ * "one-shot generation failed: Error code: 403 - {'error': {'message': '...'}}".
+ * Show the provider's own sentence. For a login or billing refusal, add where
+ * to look: the card borrows the model of the open chat.
+ */
+export function explainError(raw) {
+  const text = clean(raw)
+    .replace(/^one-shot generation failed:\s*/i, '')
+    .trim()
+
+  if (!text) {
+    return { message: STR.failed, hint: '' }
+  }
+
+  const code = text.match(/Error code:\s*(\d{3})/i)?.[1]
+  const detail = text.match(/['"]message['"]\s*:\s*(['"])(.+?)\1\s*[,}]/)?.[2]
+  const reason = clip(detail || text, 200)
+
+  return {
+    message: code ? `${STR.modelRefused(code)} ${reason}` : reason,
+    hint: ['401', '402', '403'].includes(code) ? STR.modelHint : ''
+  }
+}
 
 const elementOf = node => (node ? (node.nodeType === 1 ? node : node.parentElement) : null)
 
@@ -879,6 +906,7 @@ const STYLE = `
 .hab-dots i:nth-child(2){animation-delay:.15s}
 .hab-dots i:nth-child(3){animation-delay:.3s}
 .hab-error{display:flex;align-items:center;gap:8px;color:var(--ui-red);font-size:12px}
+.hab-hint{margin-top:5px;color:var(--ui-text-tertiary);font-size:11.5px}
 .hab-note{flex:none;padding:7px 12px 0;color:var(--ui-text-quaternary);font-size:11px}
 .hab-foot{flex:none;display:flex;align-items:flex-end;gap:6px;padding:8px}
 .hab-input{flex:1;min-width:0;max-height:96px;resize:none;padding:6px 9px;border-radius:8px;border:1px solid var(--ui-stroke-secondary);background:transparent;color:var(--ui-text-primary);font:inherit;font-size:13px;line-height:1.4;outline:none}
@@ -1659,13 +1687,17 @@ function createUi(ctx, doc, view) {
             doc,
             'div',
             { class: 'hab-error', role: 'alert' },
-            el(doc, 'span', { text: turn.error }),
+            el(doc, 'span', { text: turn.message }),
             textButton(null, STR.retry, () => {
               thread.turns.splice(thread.turns.indexOf(turn), 1)
               void runTurn(turn.label, turn.prompt)
             })
           )
         )
+
+        if (turn.hint) {
+          nodes.push(el(doc, 'div', { class: 'hab-hint', text: turn.hint }))
+        }
       } else {
         const answer = el(doc, 'div', { class: 'hab-a' })
 
@@ -1687,7 +1719,7 @@ function createUi(ctx, doc, view) {
       return
     }
 
-    const turn = { label, prompt, answer: '', status: 'pending', error: '' }
+    const turn = { label, prompt, answer: '', status: 'pending', message: '', hint: '' }
 
     mine.thread.turns.push(turn)
     mine.thread.busy = true
@@ -1704,7 +1736,7 @@ function createUi(ctx, doc, view) {
       turn.status = 'done'
     } catch (error) {
       turn.status = 'error'
-      turn.error = clip(clean(error?.message) || STR.failed, 200)
+      Object.assign(turn, explainError(error?.message))
     }
 
     mine.thread.busy = false

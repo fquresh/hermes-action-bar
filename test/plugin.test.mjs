@@ -459,6 +459,38 @@ test('a failed call shows the error with Retry', async () => {
   assert.equal(fake.calls.request.length, 2)
 })
 
+test('a provider refusal shows the provider sentence and where to look', async () => {
+  page = setup()
+  fake.oneshot = async () => {
+    throw new Error(
+      "one-shot generation failed: Error code: 403 - {'error': {'type': 'permission_error', 'message': 'An active OpenCode Go subscription is required to use Go models.'}}"
+    )
+  }
+  await page.highlight(page.byId('p1'))
+  await page.click(page.button(page.bar(), 'Explain'))
+
+  const text = page.card().querySelector('.hab-error span').textContent
+
+  assert.equal(
+    text,
+    'The model refused the request (403). An active OpenCode Go subscription is required to use Go models.'
+  )
+  assert.ok(page.card().querySelector('.hab-hint').textContent.includes('model of the open chat'))
+})
+
+test('explainError keeps a plain error and reads both quote styles', () => {
+  assert.deepEqual(mod.explainError('one-shot generation failed: no provider configured'), {
+    message: 'no provider configured',
+    hint: ''
+  })
+  assert.deepEqual(mod.explainError(''), { message: 'The request failed.', hint: '' })
+  assert.equal(
+    mod.explainError(`Error code: 429 - {"error": {"message": "Can't take more requests", "code": 429}}`).message,
+    "The model refused the request (429). Can't take more requests"
+  )
+  assert.equal(mod.explainError('Error code: 429 - {}').hint, '')
+})
+
 test('an empty answer is an error, not a blank card', async () => {
   page = setup()
   fake.oneshot = async () => ({ text: '   ' })
