@@ -12,6 +12,11 @@ A small bar appears at the selection.
   The answer does not enter the chat, and the agent does not see it.
 - **Copy** copies the selected text.
 
+![The bar above a selection: Reply, Ask, Explain, Summarize, Fact-check, Copy](docs/media/bar.jpg)
+
+The images on this page show the plugin in Hermes Desktop 0.23.1.
+The chat and the model answers in them are real.
+
 ## Why
 
 Hermes replies are long.
@@ -57,7 +62,12 @@ Which one is better for a 20 GB database?
 Keep each answer to two sentences.
 ```
 
+![Two replies with one comment each, then one message](docs/media/reply.gif)
+
 You can edit a comment or remove a reply in the strip above the composer.
+
+![Two reply cards above the composer, with a typed message](docs/media/reply-cards.jpg)
+
 The **Send** button on the strip sends the replies when the composer is empty.
 Replies belong to the chat where you made them.
 
@@ -76,6 +86,10 @@ It does not send them.
 
 Escape closes the card.
 
+![Explain, then a follow-up question, then Send to chat](docs/media/ask.gif)
+
+![An answer card with an explanation from the model of the open chat](docs/media/answer-card.jpg)
+
 ### Your own actions
 
 Open **Settings > Plugins > Action Bar**.
@@ -86,6 +100,8 @@ The first three actions show on the bar.
 The others are behind the arrow.
 
 **Add research set** adds an example set for investment research: Implications, Bull case, Bear case and Find the source.
+
+![The settings page with the three default actions](docs/media/settings.jpg)
 
 The same page sets where the bar appears: in chat messages only (the default), or on any text outside an input.
 
@@ -115,7 +131,7 @@ Action Bar needs Hermes 0.22.5 or later.
 The plugin is one file, `desktop/plugin.js`.
 It has no Python half, no tools and no hooks.
 
-- **The bar and the card** are the plugin's own elements on `<body>`. They use theme variables only.
+- **The bar and the card** are the plugin's own elements on `<body>`. They use theme variables only, so they follow the light and the dark theme.
 - **The highlight** stays visible after the selection is gone. The plugin paints it with the CSS Custom Highlight API, which does not change the page.
 - **Reply cards** render in the `composer.top` slot. A `composer.middleware` handler puts them in front of your message when you send.
 - **Answers** come from `host.request('llm.oneshot')`. This is one stateless model call. It reads no session history and writes none.
