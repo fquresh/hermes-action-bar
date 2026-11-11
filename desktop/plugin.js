@@ -55,7 +55,12 @@ const HISTORY_TURNS = 6
 const HISTORY_ANSWER_MAX = 1500
 const ANSWER_TOKENS = 1200
 const ONESHOT_TIMEOUT_MS = 90000
-const RESTORE_CHECK_MS = 2500
+// A rejected send: Hermes gives the typed text back. The plugin looks for it
+// each 500 ms for 6 seconds, then each 2 seconds, for one minute in all.
+const RESTORE_FAST_MS = 500
+const RESTORE_FAST_CHECKS = 12
+const RESTORE_SLOW_MS = 2000
+const RESTORE_SLOW_CHECKS = 27
 const BAR_ACTIONS = 3
 const ACTIONS_MAX = 12
 const LABEL_MAX = 24
@@ -525,9 +530,10 @@ export async function askModel(thread, question) {
 // Sending replies
 // ---------------------------------------------------------------------------
 
-const getDraft = () =>
+/** The draft of one chat ('new' or a stored id), or of the active composer (null). */
+const getDraft = (address = null) =>
   Promise.resolve()
-    .then(() => host.composer.getDraft(null))
+    .then(() => host.composer.getDraft(address))
     .catch(() => null)
 
 const SEND_GESTURE_MS = 1000
@@ -543,6 +549,13 @@ export function noteSendGesture() {
   sendGesture = { at: Date.now(), key: composerKey() }
 }
 
+let typedCount = 0
+
+/** A key or a paste outside this plugin's UI: the user changed a draft. */
+export function noteTyping() {
+  typedCount += 1
+}
+
 /** True one time for each gesture, and only for the chat where it occurred. */
 function takeSendGesture(key) {
   const gesture = sendGesture
@@ -550,6 +563,38 @@ function takeSendGesture(key) {
   sendGesture = null
 
   return Boolean(gesture && gesture.key === key && Date.now() - gesture.at <= SEND_GESTURE_MS)
+}
+
+/**
+ * Hermes does not tell a plugin that it rejected a send. It gives the typed
+ * text back to the composer, at any time after the send. So the sent text in
+ * the composer, with no key pressed since the send, means a rejected send, and
+ * the replies return to the strip. A key means that the user wrote the text,
+ * and the watch stops.
+ */
+function watchForRejection(schedule, key, list, text) {
+  const typedAtSend = typedCount
+  const isBack = draft => typeof draft === 'string' && draft.trim() === text
+  const giveBack = to => setReplies(to, [...list, ...repliesFor(to)])
+
+  const check = async attempt => {
+    if (typedCount !== typedAtSend) {
+      return
+    }
+
+    // The chat of the send first. A send from a new chat can move to its new session.
+    if (isBack(await getDraft(key))) {
+      giveBack(key)
+    } else if (isBack(await getDraft())) {
+      giveBack(composerKey())
+    } else if (attempt + 1 < RESTORE_FAST_CHECKS + RESTORE_SLOW_CHECKS) {
+      look(attempt + 1)
+    }
+  }
+
+  const look = attempt => schedule(() => check(attempt), attempt < RESTORE_FAST_CHECKS ? RESTORE_FAST_MS : RESTORE_SLOW_MS)
+
+  look(0)
 }
 
 /**
@@ -571,18 +616,9 @@ export function makeMiddleware(schedule) {
 
       setReplies(key, [])
 
+      // A send with attachments only has no text to look for, so it has no watch.
       if (text.trim()) {
-        schedule(async () => {
-          if (repliesFor(key).length) {
-            return
-          }
-
-          const back = await getDraft()
-
-          if (typeof back === 'string' && back.trim() === text.trim()) {
-            setReplies(key, list)
-          }
-        }, RESTORE_CHECK_MS)
+        watchForRejection(schedule, key, list, text.trim())
       }
 
       return { ...draft, text: formatReplies(list, text) }
@@ -1845,8 +1881,27 @@ function createUi(ctx, doc, view) {
     doc,
     'keydown',
     event => {
-      if (event.key === 'Enter' && !event.isComposing && !inUi(event.target)) {
+      if (inUi(event.target)) {
+        return
+      }
+
+      // A modifier key alone, as in Cmd+Tab, does not change a draft.
+      if (!['Shift', 'Control', 'Alt', 'Meta'].includes(event.key)) {
+        noteTyping()
+      }
+
+      if (event.key === 'Enter' && !event.isComposing) {
         noteSendGesture()
+      }
+    },
+    true
+  )
+  ctx.addEventListener(
+    doc,
+    'paste',
+    event => {
+      if (!inUi(event.target)) {
+        noteTyping()
       }
     },
     true

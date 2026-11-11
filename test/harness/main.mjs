@@ -99,6 +99,16 @@ async function send(text) {
     }
   }
 
+  // Like Hermes: a rejected send gives the typed text back to the composer, with no notice to a plugin.
+  // Set window.__harness.rejectAfter to a time in milliseconds to try it.
+  if (window.__harness.rejectAfter != null) {
+    await new Promise(resolve => setTimeout(resolve, window.__harness.rejectAfter))
+    input.innerText = text
+    log.push({ type: 'rejected', text })
+
+    return false
+  }
+
   log.push({ type: 'send', text: current.text })
   addMessage('user', current.text)
 

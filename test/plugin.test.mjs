@@ -313,6 +313,70 @@ test('send: a rejected message gets its replies back', async () => {
   assert.equal(mod.repliesFor('new').length, 0)
 })
 
+test('send: a message that Hermes rejects late gets its replies back', async () => {
+  page = setup()
+
+  const scheduled = []
+  const { handler } = mod.makeMiddleware((fn, ms) => scheduled.push({ fn, ms }))
+
+  mod.addReply('new', P1, 'note')
+  mod.noteSendGesture()
+  await handler({ text: 'my message' })
+
+  // The gateway has not answered yet. The composer stays empty for three seconds.
+  for (let check = 0; check < 6; check += 1) {
+    await scheduled[check].fn()
+    assert.equal(mod.repliesFor('new').length, 0)
+  }
+
+  // Then Hermes rejects the send and gives the draft text back.
+  fake.draft = 'my message'
+  await scheduled[6].fn()
+  assert.equal(mod.repliesFor('new').length, 1)
+  assert.equal(scheduled.length, 7, 'the watch stops after the restore')
+})
+
+test('send: the same text, typed again, does not bring sent replies back', async () => {
+  page = setup()
+
+  const scheduled = []
+  const { handler } = mod.makeMiddleware((fn, ms) => scheduled.push({ fn, ms }))
+
+  mod.addReply('new', P1, 'note')
+  mod.noteSendGesture()
+  await handler({ text: 'ok' })
+
+  // Hermes accepted the send. The user types the same two letters again.
+  page.fire(page.doc.body, 'keydown', { key: 'o' })
+  page.fire(page.doc.body, 'keydown', { key: 'k' })
+  fake.draft = 'ok'
+  await scheduled[0].fn()
+
+  assert.equal(mod.repliesFor('new').length, 0, 'the replies were sent one time only')
+  assert.equal(scheduled.length, 1, 'the watch stops when the user types')
+})
+
+test('send: the watch for a rejected send has an end', async () => {
+  page = setup()
+
+  const scheduled = []
+  const { handler } = mod.makeMiddleware((fn, ms) => scheduled.push({ fn, ms }))
+
+  mod.addReply('new', P1, 'note')
+  mod.noteSendGesture()
+  await handler({ text: 'my message' })
+
+  for (let check = 0; check < scheduled.length && check < 200; check += 1) {
+    await scheduled[check].fn()
+  }
+
+  const total = scheduled.reduce((sum, item) => sum + item.ms, 0)
+
+  assert.ok(scheduled.length > 1 && scheduled.length < 100)
+  assert.ok(total >= 30000 && total <= 120000, `watched for ${total} ms`)
+  assert.equal(mod.repliesFor('new').length, 0)
+})
+
 test('send: a queued or a voice send does not take the replies', async () => {
   page = setup()
   mod.addReply('new', P1, 'note')
