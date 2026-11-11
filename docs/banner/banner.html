@@ -1,9 +1,10 @@
 <!doctype html>
 <!--
   Source of docs/media/banner.png, the 2:1 catalog banner (1200 x 600).
-  The rows on the right are an illustration: one row for each action, with a
-  short example that we wrote. They use the plugin's own labels and icons.
-  They are not screenshots.
+  The bar on the left and the rows on the right are an illustration: one row
+  for each action, with a short example that we wrote. They use the plugin's
+  own labels and icons. They are not screenshots.
+  The script at the end draws one line from each bar button to its row.
 
   To make the image again (macOS, Google Chrome):
   "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new \
@@ -55,32 +56,44 @@
       mark { white-space: normal; padding: 2px 2px 3px; border-radius: 2px; background: var(--gold); color: #fff; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
 
       /* Left: the name and the promise. */
-      .copy { position: absolute; left: 56px; top: 86px; width: 380px; }
+      .copy { position: absolute; left: 56px; top: 98px; width: 460px; }
       .label { color: #8ea6e6; font-size: 14px; font-weight: 600; letter-spacing: 0.2em; }
       h1 { margin-top: 16px; font-size: 80px; font-weight: 800; letter-spacing: -0.035em; line-height: 0.98; white-space: nowrap; }
       .line { margin-top: 26px; color: #b8c0d0; font-size: 23px; line-height: 1.38; }
       .line b { color: #f2f4f8; font-weight: 600; }
-      .steps { position: absolute; left: 56px; bottom: 58px; display: flex; flex-direction: column; gap: 11px; color: var(--text-2); font-size: 17px; }
-      .steps div { display: flex; align-items: center; gap: 12px; }
-      .steps i {
-        flex: none;
-        display: grid;
-        place-items: center;
-        width: 26px;
-        height: 26px;
-        border: 1px solid rgba(124, 162, 255, 0.45);
-        border-radius: 50%;
-        background: rgba(124, 162, 255, 0.12);
-        color: #bdd0ff;
-        font-size: 13px;
-        font-style: normal;
-        font-weight: 600;
+
+      /* The bar, as it looks in Hermes, above a selection. */
+      .bar {
+        position: absolute;
+        left: 56px;
+        top: 492px;
+        display: flex;
+        align-items: center;
+        gap: 1px;
+        height: 36px;
+        padding: 0 5px;
+        border: 1px solid rgba(140, 170, 255, 0.4);
+        border-radius: 999px;
+        background: var(--elevated);
+        box-shadow: 0 8px 28px rgba(0, 0, 0, 0.55);
+        color: var(--text-2);
+        font-size: 12px;
+        font-weight: 500;
+        white-space: nowrap;
       }
-      .steps b { color: var(--text-1); font-weight: 600; }
+      .bar span { display: inline-flex; align-items: center; gap: 5px; height: 28px; padding: 0 7px; border-radius: 999px; }
+      .bar span:first-child { color: var(--text-1); }
+      .bar svg { font-size: 14px; }
+      .bar i { width: 1px; height: 16px; margin: 0 2px; background: var(--stroke); }
+      .under { position: absolute; left: 64px; top: 539px; color: var(--text-3); font-size: 14.5px; }
+
+      /* The lines from the bar to the rows. */
+      .wires { position: absolute; inset: 0; width: 1200px; height: 600px; stroke: rgba(124, 162, 255, 0.62); stroke-width: 1.5; }
+      .wires circle { fill: #9db7ff; stroke: none; }
 
       /* Right: one row for each action. */
-      .rows { position: absolute; left: 466px; top: 30px; width: 704px; }
-      .head, .row { display: grid; grid-template-columns: 136px 222px 26px 1fr; align-items: center; padding: 0 12px 0 10px; }
+      .rows { position: absolute; left: 582px; top: 30px; width: 588px; }
+      .head, .row { display: grid; grid-template-columns: 119px 184px 22px 1fr; align-items: center; padding: 0 11px 0 9px; }
       .head { height: 24px; color: var(--text-4); font-size: 11px; font-weight: 600; letter-spacing: 0.14em; }
       .row {
         position: relative;
@@ -95,33 +108,33 @@
         justify-self: start;
         display: inline-flex;
         align-items: center;
-        gap: 7px;
-        height: 32px;
-        padding: 0 12px 0 10px;
+        gap: 6px;
+        height: 29px;
+        padding: 0 10px 0 8px;
         border: 1px solid var(--stroke);
         border-radius: 999px;
         background: var(--elevated);
         color: var(--text-1);
-        font-size: 14px;
+        font-size: 13px;
         font-weight: 550;
         white-space: nowrap;
       }
-      .pill svg { font-size: 15px; color: var(--accent); }
+      .pill svg { font-size: 14px; color: var(--accent); }
       .pill.own { border-style: dashed; background: transparent; color: var(--text-2); }
 
-      .sel { padding-right: 10px; color: var(--text-2); font-size: 14px; line-height: 1.5; }
-      .sel.long { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; font-size: 12.5px; line-height: 1.52; }
+      .sel { padding-right: 8px; color: var(--text-2); font-size: 13.5px; line-height: 1.5; }
+      .sel.long { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; font-size: 12px; line-height: 1.55; }
       .sel code { font: 13px ui-monospace, SFMono-Regular, Menlo, monospace; }
       .arrow { color: var(--text-4); font-size: 16px; }
 
       .get {
         position: relative;
-        padding: 8px 11px 9px;
+        padding: 8px 10px 9px;
         border: 1px solid var(--stroke);
         border-radius: 10px;
         background: var(--elevated);
         color: var(--text-1);
-        font-size: 13.5px;
+        font-size: 13px;
         line-height: 1.4;
       }
       .get.agent { border-color: rgba(124, 162, 255, 0.5); background: rgba(124, 162, 255, 0.1); }
@@ -145,8 +158,8 @@
       }
       .agent .tag { border-color: rgba(124, 162, 255, 0.5); color: #bdd0ff; }
 
-      .row.last { grid-template-columns: 136px 1fr; height: 48px; border-style: dashed; background: transparent; }
-      .row.last .sel { padding-right: 0; }
+      .row.last { display: flex; gap: 10px; height: 48px; color: var(--text-2); font-size: 13px; white-space: nowrap; }
+      .row.last .pill.own { margin-left: auto; }
     </style>
   </head>
   <body>
@@ -155,71 +168,107 @@
       <h1>Action Bar</h1>
       <p class="line">Select text in a chat.<br /><b>Reply</b> to it, or <b>ask</b> about it.<br />The answer stays out of the chat.</p>
     </div>
-    <div class="steps">
-      <div><i>1</i><span><b>Select</b> text in a reply</span></div>
-      <div><i>2</i><span><b>Pick</b> an action on the bar</span></div>
-      <div><i>3</i><span><b>Read</b> the answer next to the text</span></div>
+    <div class="bar">
+      <span data-to="reply"><svg viewBox="0 0 16 16"><path d="M6.5 3.5 2.5 7.5l4 4M2.5 7.5h6a5 5 0 0 1 5 5" /></svg>Reply</span>
+      <span data-to="ask"><svg viewBox="0 0 16 16"><path d="M7 2.5 8.3 6 11.8 7.3 8.3 8.6 7 12.1 5.7 8.6 2.2 7.3 5.7 6z" /><path d="M12.5 10.5v3M11 12h3" /></svg>Ask</span>
+      <i></i>
+      <span data-to="explain"><svg viewBox="0 0 16 16"><path d="M2.5 3h11v8H8l-3 2.5V11H2.5z" /><path d="M6.7 6.2a1.4 1.4 0 1 1 2 1.2c-.5.3-.7.5-.7 1M8 9.6v.1" /></svg>Explain</span>
+      <span data-to="summarize"><svg viewBox="0 0 16 16"><path d="M3 4.5h10M3 8h7M3 11.5h4.5" /></svg>Summarize</span>
+      <span data-to="factcheck"><svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.5" /><path d="M5.6 8.2l1.6 1.6 3.2-3.4" /></svg>Fact-check</span>
+      <i></i>
+      <span data-to="copy"><svg viewBox="0 0 16 16"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5" /><path d="M10.5 5.5v-2a1 1 0 0 0-1-1h-6a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2" /></svg></span>
     </div>
+    <div class="under"><mark>Select text in a reply,</mark> and the bar appears.</div>
+    <svg class="wires" viewBox="0 0 1200 600"></svg>
 
     <div class="rows">
       <div class="head"><span>ACTION</span><span>YOU SELECT</span><span></span><span>YOU GET</span></div>
 
-      <div class="row">
+      <div class="row" data-row="reply">
         <span class="pill"><svg viewBox="0 0 16 16"><path d="M6.5 3.5 2.5 7.5l4 4M2.5 7.5h6a5 5 0 0 1 5 5" /></svg>Reply</span>
         <div class="sel"><mark>I will install the plugin now.</mark></div>
         <span class="arrow">&rarr;</span>
         <div class="get agent">
           <span class="tag">GOES TO THE AGENT</span>
           <div class="q">I will install the plugin now.</div>
-          <div>Wait. Show me what it can read first.</div>
+          <div>Wait. Show me what it can read.</div>
         </div>
       </div>
 
-      <div class="row">
+      <div class="row" data-row="ask">
         <span class="pill"><svg viewBox="0 0 16 16"><path d="M7 2.5 8.3 6 11.8 7.3 8.3 8.6 7 12.1 5.7 8.6 2.2 7.3 5.7 6z" /><path d="M12.5 10.5v3M11 12h3" /></svg>Ask</span>
         <div class="sel"><mark>Each catalog plugin is pinned to one commit.</mark></div>
         <span class="arrow">&rarr;</span>
         <div class="get">
           <span class="tag">ONLY YOU SEE IT</span>
           <div class="you">You: Why is that safer?</div>
-          <div>The reviewed code is the code that runs.</div>
+          <div>Only reviewed code can run.</div>
         </div>
       </div>
 
-      <div class="row">
+      <div class="row" data-row="explain">
         <span class="pill"><svg viewBox="0 0 16 16"><path d="M2.5 3h11v8H8l-3 2.5V11H2.5z" /><path d="M6.7 6.2a1.4 1.4 0 1 1 2 1.2c-.5.3-.7.5-.7 1M8 9.6v.1" /></svg>Explain</span>
         <div class="sel">The <mark>context window</mark> is full.</div>
         <span class="arrow">&rarr;</span>
         <div class="get">
           <span class="tag">ONLY YOU SEE IT</span>
-          The <b>context window</b> is the amount of text that a model can read at one time.
+          <b>Context window:</b> the text that a model can read at one time.
         </div>
       </div>
 
-      <div class="row">
+      <div class="row" data-row="summarize">
         <span class="pill"><svg viewBox="0 0 16 16"><path d="M3 4.5h10M3 8h7M3 11.5h4.5" /></svg>Summarize</span>
-        <div class="sel long"><mark>Open the catalog and find the plugin. Read its description and its disclosure. Then press Install.</mark></div>
+        <div class="sel long"><mark>Open the catalog. Find the plugin. Read its disclosure. Then press Install.</mark></div>
         <span class="arrow">&rarr;</span>
         <div class="get">
           <span class="tag">ONLY YOU SEE IT</span>
-          Find the plugin, check it, then install it.
+          Find it, check it, install it.
         </div>
       </div>
 
-      <div class="row">
+      <div class="row" data-row="factcheck">
         <span class="pill"><svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.5" /><path d="M5.6 8.2l1.6 1.6 3.2-3.4" /></svg>Fact-check</span>
-        <div class="sel"><mark>A model knows today's news.</mark></div>
+        <div class="sel"><mark>A model knows the news.</mark></div>
         <span class="arrow">&rarr;</span>
         <div class="get">
           <span class="tag">ONLY YOU SEE IT</span>
-          <b class="no">Not correct.</b> A model knows nothing after its training date, unless it has a search tool.
+          <b class="no">Not correct.</b> A model needs a search tool for news.
         </div>
       </div>
 
-      <div class="row last">
+      <div class="row last" data-row="copy">
+        <span class="pill"><svg viewBox="0 0 16 16"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5" /><path d="M10.5 5.5v-2a1 1 0 0 0-1-1h-6a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2" /></svg>Copy</span>
+        <span>Copies the text.</span>
         <span class="pill own"><svg viewBox="0 0 16 16"><path d="M8 3.5v9M3.5 8h9" /></svg>Your own</span>
-        <div class="sel">Add an action in Settings: a label and a prompt. <b style="color: var(--text-1); font-weight: 600">Copy</b> is on the bar too.</div>
+        <span>Add actions in Settings.</span>
       </div>
     </div>
+
+    <script>
+      // One line from each bar button to its row. The order of the levels and
+      // of the tracks keeps the lines from crossing.
+      const wires = document.querySelector('.wires')
+      const rowsLeft = document.querySelector('.rows').getBoundingClientRect().left
+      const bar = document.querySelector('.bar').getBoundingClientRect()
+      const names = ['reply', 'ask', 'explain', 'summarize', 'factcheck']
+      const r = 6
+      let d = ''
+      let dots = ''
+      names.forEach((name, i) => {
+        const button = document.querySelector(`.bar [data-to="${name}"]`).getBoundingClientRect()
+        const row = document.querySelector(`[data-row="${name}"]`).getBoundingClientRect()
+        const x = Math.round(button.left + button.width / 2)
+        const y = Math.round(row.top + row.height / 2)
+        const level = bar.top - 10 - (names.length - 1 - i) * 8
+        const track = rowsLeft - 18 - (names.length - 1 - i) * 8
+        d += `M${x} ${bar.top}V${level + r}Q${x} ${level} ${x + r} ${level}H${track - r}Q${track} ${level} ${track} ${level - r}V${y + r}Q${track} ${y} ${track + r} ${y}H${rowsLeft - 4}`
+        dots += `<circle cx="${x}" cy="${bar.top}" r="2.5" /><circle cx="${rowsLeft - 3}" cy="${y}" r="3" />`
+      })
+      const copyRow = document.querySelector('[data-row="copy"]').getBoundingClientRect()
+      const cy = Math.round(copyRow.top + copyRow.height / 2)
+      d += `M${bar.right} ${cy}H${rowsLeft - 4}`
+      dots += `<circle cx="${rowsLeft - 3}" cy="${cy}" r="3" />`
+      wires.innerHTML = `<path d="${d}" />${dots}`
+    </script>
   </body>
 </html>
