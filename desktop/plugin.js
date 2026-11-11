@@ -227,9 +227,11 @@ const sameRange = (a, b) => {
  * Hermes turns `@file:`, `@url:` and other `@kind:` text into live context
  * references. Agent output can carry an injected `@file:` path to a private
  * file, and a quote of it must stay inert text. A zero-width space after `@` keeps the
- * text readable and breaks the reference pattern.
+ * text readable and breaks the reference pattern. The pattern covers `@kind:` for each
+ * kind name that Hermes accepts (letters, digits, `-`, `_`), and `@diff` and `@staged`,
+ * which have no colon.
  */
-export const defuseRefs = text => clean(text).replace(/@(?=[a-z]+:)/gi, '@\u200B')
+export const defuseRefs = text => clean(text).replace(/@(?=(?:diff|staged)\b|[a-z][\w-]*:)/gi, '@\u200B')
 
 /** Text as a Markdown blockquote. Blank lines stay inside the quote. */
 export const quoteBlock = text =>
@@ -528,18 +530,42 @@ const getDraft = () =>
     .then(() => host.composer.getDraft(null))
     .catch(() => null)
 
+const SEND_GESTURE_MS = 1000
+let sendGesture = null
+
 /**
- * Idle send: put this chat's replies in front of the typed text. Hermes gives
- * a rejected send its draft text back, so the replies return with it.
+ * A typed send starts with Enter or a click in the chat that has focus. Hermes
+ * also runs the middleware for a queued prompt and for a voice message, and a
+ * draft carries no chat id. Those sends have no such start, and they can come
+ * from a chat that does not have focus.
+ */
+export function noteSendGesture() {
+  sendGesture = { at: Date.now(), key: composerKey() }
+}
+
+/** True one time for each gesture, and only for the chat where it occurred. */
+function takeSendGesture(key) {
+  const gesture = sendGesture
+
+  sendGesture = null
+
+  return Boolean(gesture && gesture.key === key && Date.now() - gesture.at <= SEND_GESTURE_MS)
+}
+
+/**
+ * Typed send: put this chat's replies in front of the typed text. Hermes gives
+ * a rejected send its draft text back, so the replies return with it. A send
+ * that the user did not start here leaves the replies in the strip.
  */
 export function makeMiddleware(schedule) {
   return {
     handler: draft => {
       const key = composerKey()
+      const typed = takeSendGesture(key)
       const list = repliesFor(key)
       const text = draft?.text ?? ''
 
-      if (!list.length || isSlashCommand(text)) {
+      if (!typed || !list.length || isSlashCommand(text)) {
         return draft
       }
 
@@ -1810,6 +1836,27 @@ function createUi(ctx, doc, view) {
     event => {
       if (!inUi(event.target)) {
         hideBar()
+      }
+    },
+    true
+  )
+  // Enter or a click outside this plugin's UI can start a typed send.
+  ctx.addEventListener(
+    doc,
+    'keydown',
+    event => {
+      if (event.key === 'Enter' && !event.isComposing && !inUi(event.target)) {
+        noteSendGesture()
+      }
+    },
+    true
+  )
+  ctx.addEventListener(
+    doc,
+    'click',
+    event => {
+      if (!inUi(event.target)) {
+        noteSendGesture()
       }
     },
     true

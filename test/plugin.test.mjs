@@ -245,6 +245,8 @@ test('send: each quote, then its comment, then the typed message', async () => {
   mod.addReply('new', P1, 'Is this guidance?')
   mod.addReply('new', P2)
 
+  mod.noteSendGesture()
+
   const sent = await middleware()({ text: 'Answer both, please.', attachments: ['a'] })
 
   assert.equal(sent.text, `> ${P1}\n\nIs this guidance?\n\n> ${P2}\n\nAnswer both, please.`)
@@ -263,6 +265,7 @@ test('send: no replies, or a slash command, passes the draft through unchanged',
 
   const slash = { text: '/model' }
 
+  mod.noteSendGesture()
   assert.equal(await middleware()(slash), slash)
   assert.equal(mod.repliesFor('new').length, 1, 'the replies wait for a real message')
 })
@@ -278,6 +281,7 @@ test('send: replies belong to the chat that the user looks at', async () => {
   const { host } = await import('./fake-sdk.mjs')
 
   host.state.focusedStoredSessionId.set('session-a')
+  mod.noteSendGesture()
 
   const fromA = await middleware()({ text: 'hello' })
 
@@ -291,6 +295,7 @@ test('send: a rejected message gets its replies back', async () => {
   const { handler } = mod.makeMiddleware((fn, ms) => scheduled.push({ fn, ms }))
 
   mod.addReply('new', P1, 'note')
+  mod.noteSendGesture()
   await handler({ text: 'my message' })
   assert.equal(mod.repliesFor('new').length, 0)
   assert.equal(scheduled.length, 1)
@@ -301,10 +306,44 @@ test('send: a rejected message gets its replies back', async () => {
   assert.equal(mod.repliesFor('new').length, 1)
 
   // An accepted send leaves an empty composer: nothing comes back.
+  mod.noteSendGesture()
   await handler({ text: 'my message' })
   fake.draft = ''
   await scheduled[1].fn()
   assert.equal(mod.repliesFor('new').length, 0)
+})
+
+test('send: a queued or a voice send does not take the replies', async () => {
+  page = setup()
+  mod.addReply('new', P1, 'note')
+
+  // Hermes runs the middleware for a queued prompt too. No Enter and no click comes before it.
+  const queued = { text: 'a queued message' }
+
+  assert.equal(await middleware()(queued), queued)
+  assert.equal(mod.repliesFor('new').length, 1, 'the replies stay for the typed message')
+
+  page.fire(page.doc.body, 'keydown', { key: 'Enter' })
+
+  const typed = await middleware()({ text: 'a typed message' })
+
+  assert.equal(typed.text, `> ${P1}\n\nnote\n\na typed message`)
+})
+
+test('send: a send from a chat without focus does not take the replies of the focused chat', async () => {
+  page = setup()
+
+  const { host } = await import('./fake-sdk.mjs')
+
+  // Enter in the new chat, then the focus moves to chat B before a queued prompt of chat A drains.
+  mod.noteSendGesture()
+  host.state.focusedStoredSessionId.set('session-b')
+  mod.addReply('session-b', P1, 'for B')
+
+  const fromA = { text: 'queued in A' }
+
+  assert.equal(await middleware()(fromA), fromA)
+  assert.equal(mod.repliesFor('session-b').length, 1)
 })
 
 test('the Send button delivers replies from an empty composer', async () => {
@@ -345,6 +384,19 @@ test('the Send button keeps the replies when Hermes refuses, or the draft is a c
   assert.equal(await mod.sendNow('new'), false)
   assert.equal(mod.repliesFor('new').length, 1)
   assert.equal(fake.calls.submit.length, 1, 'no second submit')
+})
+
+test('a quote never arms a reference without a colon, or a plugin reference', () => {
+  const quote = 'run @diff and @staged, then read @my-kb:secret and @kb_2:x. Mail a@b.com.'
+  const text = mod.formatReplies([{ quote, comment: '' }], '')
+
+  // The two patterns of Hermes, from agent/context_references.py.
+  const builtIn = /(?<![\w/])@(?:(?:diff|staged)\b|(?:file|folder|git|url):\S+)/
+  const fromPlugin = /(?<![\w/])@[a-zA-Z][a-zA-Z0-9_-]*:\S+/
+
+  assert.ok(builtIn.test(quote) && fromPlugin.test(quote), 'the raw quote is live')
+  assert.ok(!builtIn.test(text) && !fromPlugin.test(text), 'the sent quote is inert')
+  assert.ok(text.includes('a@b.com'), 'an email address does not change')
 })
 
 test('a quote never arms a context reference', () => {

@@ -157,7 +157,7 @@ If that attribute is not on the page, the bar shows for any selection outside an
 
 Two safety details:
 
-- **Quotes stay inert.** Hermes turns `@file:` and other `@kind:` text into live context references. A reply can contain such text, also by prompt injection. Action Bar puts a zero-width space after the `@` in each quote, so a quote can never attach a file.
+- **Quotes stay inert.** Hermes turns `@file:` and other `@kind:` text into live context references. A reply can contain such text, also by prompt injection. Action Bar puts a zero-width space after the `@` of each such reference in a quote, also `@diff` and `@staged`, so a quote can never attach a file.
 - **Model output stays text.** The card renders Markdown with `createElement` and text nodes only. It never parses HTML.
 
 ## Privacy
@@ -174,6 +174,7 @@ Two safety details:
 - The card uses the model of the open chat. If that model has no valid login or subscription, the card shows the provider's error. Correct the model in Hermes, then click **Retry**.
 - The answer model has no tools and no web access. Fact-check tells you what to verify. Use **Send to chat** to let the agent verify it with its tools.
 - While the agent works, a typed Enter steers the turn and does not pass through plugin middleware ([hermes-agent#126917](https://github.com/NousResearch/hermes-agent/issues/126917)). The replies stay in the strip. Use the **Send** button to deliver them.
+- A queued message and a voice message do not take the replies. Only a message that you send with Enter or with a click takes them. The replies stay in the strip, and the **Send** button delivers them.
 - With several chat tiles open, the strip shows the replies of the chat that has focus.
 
 ## Develop
