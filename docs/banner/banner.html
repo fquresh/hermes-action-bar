@@ -1,0 +1,107 @@
+<!doctype html>
+<!--
+  Source of docs/media/banner.png, the 2:1 catalog banner (1200 x 600).
+  The three panels are crops of the real screenshots in docs/media.
+
+  To make the image again (macOS, Google Chrome):
+  "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new \
+    --hide-scrollbars --force-device-scale-factor=1 --window-size=1200,600 \
+    --screenshot=docs/media/banner.png docs/banner/banner.html
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Action Bar banner</title>
+    <style>
+      * { box-sizing: border-box; margin: 0; }
+      html, body { width: 1200px; height: 600px; overflow: hidden; }
+      body {
+        position: relative;
+        background:
+          radial-gradient(620px 420px at 82% 46%, rgba(86, 132, 255, 0.2), transparent 70%),
+          radial-gradient(520px 380px at 8% 108%, rgba(86, 132, 255, 0.1), transparent 70%),
+          #090b10;
+        color: #f2f4f8;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+      }
+
+      /* A faint line grid, so the dark area is not flat. */
+      body::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(rgba(255, 255, 255, 0.028) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255, 255, 255, 0.028) 1px, transparent 1px);
+        background-size: 40px 40px;
+        mask-image: linear-gradient(90deg, rgba(0, 0, 0, 0.9), transparent 62%);
+      }
+
+      .copy { position: absolute; left: 64px; top: 92px; width: 470px; }
+      .label { color: #8ea6e6; font-size: 15px; font-weight: 600; letter-spacing: 0.2em; }
+      h1 { margin-top: 16px; font-size: 86px; font-weight: 800; letter-spacing: -0.035em; line-height: 0.98; }
+      .line { margin-top: 24px; color: #b8c0d0; font-size: 25px; line-height: 1.36; }
+      .line b { color: #f2f4f8; font-weight: 600; }
+      .chips { position: absolute; left: 64px; bottom: 62px; display: flex; gap: 10px; }
+      .chip {
+        padding: 7px 15px 8px;
+        border: 1px solid rgba(124, 162, 255, 0.38);
+        border-radius: 999px;
+        background: rgba(124, 162, 255, 0.1);
+        color: #bdd0ff;
+        font-size: 16px;
+      }
+
+      /* Each panel shows one part of a real screenshot (1400 x 846). */
+      .panel { position: absolute; filter: drop-shadow(0 20px 34px rgba(0, 0, 0, 0.6)); }
+      .shot { width: 100%; height: 100%; border: 1px solid rgba(255, 255, 255, 0.12); background-repeat: no-repeat; }
+
+      /* The bar: x 444-996, y 243-282 of bar.jpg, at 1.087. */
+      .bar { left: 566px; top: 48px; width: 600px; height: 42px; }
+      .bar .shot {
+        border-radius: 999px;
+        border-color: rgba(140, 170, 255, 0.34);
+        background-image: url('../media/bar.jpg');
+        background-size: 1521.7px 919.6px;
+        background-position: -483.6px -265.1px;
+      }
+
+      /* One reply card: x 60-655, y 598-678 of reply-cards.jpg, at 0.92. It fades to the right. */
+      .reply { left: 566px; top: 114px; width: 547px; height: 74px; }
+      .reply .shot {
+        border-radius: 11px 0 0 11px;
+        border-right: 0;
+        background-image: url('../media/reply-cards.jpg');
+        background-size: 1288px 778.3px;
+        background-position: -56.2px -551.2px;
+        mask-image: linear-gradient(90deg, #000 72%, transparent);
+      }
+
+      /* The answer card: x 72-567, y 9-407 of answer-card.jpg, at 0.9. It fades at the bottom. */
+      .card { left: 720px; top: 212px; width: 446px; height: 358px; }
+      .card .shot {
+        border-radius: 13px 13px 0 0;
+        border-bottom: 0;
+        background-image: url('../media/answer-card.jpg');
+        background-size: 1260px 761.4px;
+        background-position: -65.8px -9.1px;
+        mask-image: linear-gradient(#000 74%, transparent);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="copy">
+      <div class="label">HERMES DESKTOP PLUGIN</div>
+      <h1>Action Bar</h1>
+      <p class="line"><b>Reply</b> to a highlight, or <b>ask</b> about it.<br />The answer stays out of the chat.</p>
+    </div>
+    <div class="chips">
+      <span class="chip">a comment per quote</span>
+      <span class="chip">answer cards</span>
+      <span class="chip">your own actions</span>
+    </div>
+    <div class="panel card"><div class="shot"></div></div>
+    <div class="panel reply"><div class="shot"></div></div>
+    <div class="panel bar"><div class="shot"></div></div>
+  </body>
+</html>

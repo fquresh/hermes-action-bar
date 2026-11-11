@@ -1,5 +1,7 @@
 # Hermes Action Bar
 
+![Action Bar, a Hermes Desktop plugin: reply to a highlight, or ask about it](docs/media/banner.png)
+
 A Hermes Desktop plugin for the questions you have while you read a reply.
 
 Select text in a chat.
