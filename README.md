@@ -16,7 +16,7 @@ A small bar appears at the selection.
 
 ![The bar above a selection: Reply, Ask, Explain, Summarize, Fact-check, Copy](docs/media/bar.jpg)
 
-The banner at the top is an illustration with a short example.
+The banner at the top is an illustration with short examples.
 The other images on this page show the plugin in Hermes Desktop 0.23.1.
 The chat and the model answers in them are real.
 
