@@ -894,7 +894,9 @@ const STYLE = `
 .hab-a>:last-child{margin-bottom:0}
 .hab-a p,.hab-a ul,.hab-a ol,.hab-a pre,.hab-a blockquote{margin:0 0 7px}
 .hab-a ul,.hab-a ol{padding-left:19px}
-.hab-a li{margin:1px 0}
+.hab-a ul{list-style:disc outside}
+.hab-a ol{list-style:decimal outside}
+.hab-a li{display:list-item;margin:1px 0}
 .hab-a code{padding:1px 4px;border-radius:4px;background:var(--ui-inline-code-background);font-size:.92em}
 .hab-a pre{padding:8px 10px;border-radius:8px;background:var(--ui-bg-quinary);font-size:12px;line-height:1.45;overflow-x:auto;white-space:pre}
 .hab-a blockquote{padding-left:9px;border-left:2px solid var(--ui-stroke-secondary);color:var(--ui-text-secondary)}
@@ -1664,8 +1666,11 @@ function createUi(ctx, doc, view) {
   const renderThread = () => {
     const { thread, parts } = card
     const nodes = []
+    let newest = null
 
     thread.turns.forEach((turn, index) => {
+      const start = nodes.length
+
       // The first turn of a fixed action is named by the card title already.
       if (index > 0 || turn.label === turn.prompt) {
         nodes.push(el(doc, 'div', { class: 'hab-q', text: turn.label }))
@@ -1704,10 +1709,16 @@ function createUi(ctx, doc, view) {
         answer.append(renderMarkdown(turn.answer, doc, openLink))
         nodes.push(answer)
       }
+
+      newest = nodes[start]
     })
 
     parts.threadEl.replaceChildren(...nodes)
-    parts.threadEl.scrollTop = parts.threadEl.scrollHeight
+
+    // Show the start of the newest turn. A long answer must not open at its end.
+    if (newest) {
+      parts.threadEl.scrollTop += newest.getBoundingClientRect().top - parts.threadEl.getBoundingClientRect().top
+    }
     parts.input.placeholder = thread.turns.length ? STR.followUpPlaceholder : STR.askPlaceholder
     parts.tools.style.display = lastAnswer() ? 'flex' : 'none'
   }

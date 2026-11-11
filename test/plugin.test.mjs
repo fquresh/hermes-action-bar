@@ -438,6 +438,34 @@ test('Ask: the card waits for the question', async () => {
   assert.equal(page.card().querySelector('.hab-q').textContent, 'What is WAL?')
 })
 
+test('the card opens a new turn at its start, not at its end', async () => {
+  page = setup()
+
+  // jsdom has no layout. Put the thread at 100 px, an answer at the thread
+  // top, and a follow-up question 240 px lower, all moved by the scroll offset.
+  const scrolled = () => page.card()?.querySelector('.hab-thread')?.scrollTop ?? 0
+
+  page.window.Element.prototype.getBoundingClientRect = function () {
+    const top = this.classList.contains('hab-thread') ? 100 : (this.classList.contains('hab-q') ? 340 : 100) - scrolled()
+
+    return { top, bottom: top, left: 0, right: 0, width: 0, height: 0 }
+  }
+
+  fake.oneshot = async () => ({ text: 'A long answer.' })
+  await page.highlight(page.byId('p1'))
+  await page.click(page.button(page.bar(), 'Explain'))
+
+  const thread = page.card().querySelector('.hab-thread')
+
+  assert.equal(thread.scrollTop, 0)
+
+  await page.type(page.card().querySelector('textarea'), 'And then?')
+
+  // The view starts at the question. It does not jump to the end of the answer.
+  assert.equal(thread.scrollTop, 240)
+  assert.equal(page.card().querySelectorAll('.hab-a').length, 2)
+})
+
 test('a failed call shows the error with Retry', async () => {
   page = setup()
   fake.oneshot = async () => {
