@@ -2,17 +2,24 @@
 
 ![Action Bar, a Hermes Desktop plugin: reply to a highlight, or ask about it](docs/media/banner.png)
 
-A Hermes Desktop plugin for the questions you have while you read a reply.
+The Hermes Action Bar is a selection bar for Hermes Desktop.
+It is a plugin for a Hermes Agent user to better engage with their Hermes agent sessions.
 
-Select text in a chat.
-A small bar appears at the selection.
+Select text in a chat and a small bar appears, with two kinds of action:
 
-- **Reply** opens a comment box at the highlight.
-  The quote and your comment become a card above the composer.
-  Nothing is sent until you press Enter in the composer.
-- **Ask**, **Explain**, **Summarize** and **Fact-check** open an answer card next to the highlight.
-  The answer does not enter the chat, and the agent does not see it.
-- **Copy** copies the selected text.
+1. **Reply**
+   - It keeps the quote and one comment as a card above the composer.
+   - On send, the cards go in front of your message as Markdown blockquotes.
+     Several passages each get their own comment in one message.
+2. **Ask | Explain | Summarize | Fact-check**
+   - For a question that only the reader has.
+     They open an "answer card" next to the highlight, with follow-up questions.
+   - The answer does not enter the chat and the agent does not see it.
+   - **Send to chat** puts it in the composer if it matters to the work.
+
+Note: actions are a label and a prompt.
+You edit them on a settings page.
+**Copy** is on the bar too, and it copies the selected text.
 
 ![The bar above a selection: Reply, Ask, Explain, Summarize, Fact-check, Copy](docs/media/bar.jpg)
 
@@ -21,6 +28,10 @@ The other images on this page show the plugin in Hermes Desktop 0.23.1.
 The chat and the model answers in them are real.
 
 ## Why
+
+I am always intrigued with making the harness and the desktop app experience better for myself and any user.
+That is why I built this.
+It grew from my earlier, smaller plugin for Hermes Desktop, [hermes-quote-selection](https://github.com/fquresh/hermes-quote-selection).
 
 Hermes replies are long.
 Most questions are about one sentence.
