@@ -1,7 +1,8 @@
 <!doctype html>
 <!--
   Source of docs/media/banner.png, the 2:1 catalog banner (1200 x 600).
-  The three panels are crops of the real screenshots in docs/media.
+  The scene on the right is an illustration. It uses the plugin's own labels,
+  icons and layout, with a short example that we wrote. It is not a screenshot.
 
   To make the image again (macOS, Google Chrome):
   "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new \
@@ -13,6 +14,16 @@
     <meta charset="utf-8" />
     <title>Action Bar banner</title>
     <style>
+      :root {
+        --text-1: #eef0f4;
+        --text-2: #bcc1cc;
+        --text-3: #8c929e;
+        --text-4: #6a707c;
+        --stroke: rgba(255, 255, 255, 0.13);
+        --stroke-soft: rgba(255, 255, 255, 0.08);
+        --elevated: #181b22;
+        --accent: #6d8ff0;
+      }
       * { box-sizing: border-box; margin: 0; }
       html, body { width: 1200px; height: 600px; overflow: hidden; }
       body {
@@ -21,8 +32,9 @@
           radial-gradient(620px 420px at 82% 46%, rgba(86, 132, 255, 0.2), transparent 70%),
           radial-gradient(520px 380px at 8% 108%, rgba(86, 132, 255, 0.1), transparent 70%),
           #090b10;
-        color: #f2f4f8;
+        color: var(--text-1);
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+        -webkit-font-smoothing: antialiased;
       }
 
       /* A faint line grid, so the dark area is not flat. */
@@ -37,56 +49,108 @@
         mask-image: linear-gradient(90deg, rgba(0, 0, 0, 0.9), transparent 62%);
       }
 
+      svg { flex: none; width: 1em; height: 1em; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+
       .copy { position: absolute; left: 64px; top: 92px; width: 470px; }
       .label { color: #8ea6e6; font-size: 15px; font-weight: 600; letter-spacing: 0.2em; }
       h1 { margin-top: 16px; font-size: 86px; font-weight: 800; letter-spacing: -0.035em; line-height: 0.98; }
       .line { margin-top: 24px; color: #b8c0d0; font-size: 25px; line-height: 1.36; }
       .line b { color: #f2f4f8; font-weight: 600; }
-      .chips { position: absolute; left: 64px; bottom: 62px; display: flex; gap: 10px; }
+      .chips { position: absolute; left: 64px; bottom: 62px; display: flex; gap: 9px; }
       .chip {
-        padding: 7px 15px 8px;
+        padding: 7px 14px 8px;
         border: 1px solid rgba(124, 162, 255, 0.38);
         border-radius: 999px;
         background: rgba(124, 162, 255, 0.1);
         color: #bdd0ff;
-        font-size: 16px;
+        font-size: 15px;
+        white-space: nowrap;
       }
 
-      /* Each panel shows one part of a real screenshot (1400 x 846). */
-      .panel { position: absolute; filter: drop-shadow(0 20px 34px rgba(0, 0, 0, 0.6)); }
-      .shot { width: 100%; height: 100%; border: 1px solid rgba(255, 255, 255, 0.12); background-repeat: no-repeat; }
+      /* The scene: a small chat window. */
+      .scene {
+        position: absolute;
+        left: 584px;
+        top: 30px;
+        width: 584px;
+        height: 540px;
+        display: flex;
+        flex-direction: column;
+        padding: 18px 22px 18px;
+        border: 1px solid var(--stroke-soft);
+        border-radius: 16px;
+        background: rgba(13, 15, 20, 0.86);
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+      }
 
-      /* The bar: x 444-996, y 243-282 of bar.jpg, at 1.087. */
-      .bar { left: 566px; top: 48px; width: 600px; height: 42px; }
-      .bar .shot {
+      /* The bar. */
+      .bar {
+        align-self: flex-start;
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        height: 40px;
+        padding: 0 6px;
+        border: 1px solid rgba(140, 170, 255, 0.36);
         border-radius: 999px;
-        border-color: rgba(140, 170, 255, 0.34);
-        background-image: url('../media/bar.jpg');
-        background-size: 1521.7px 919.6px;
-        background-position: -483.6px -265.1px;
+        background: var(--elevated);
+        box-shadow: 0 8px 28px rgba(0, 0, 0, 0.5);
+        color: var(--text-2);
+        font-size: 14px;
+        font-weight: 500;
+        white-space: nowrap;
       }
+      .bar span { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 9px; border-radius: 999px; }
+      .bar svg { font-size: 15px; }
+      .bar .on { background: rgba(124, 162, 255, 0.2); color: var(--text-1); }
+      .bar .first { color: var(--text-1); }
+      .bar i { width: 1px; height: 17px; margin: 0 3px; background: var(--stroke); }
 
-      /* One reply card: x 60-655, y 598-678 of reply-cards.jpg, at 0.92. It fades to the right. */
-      .reply { left: 566px; top: 114px; width: 547px; height: 74px; }
-      .reply .shot {
-        border-radius: 11px 0 0 11px;
-        border-right: 0;
-        background-image: url('../media/reply-cards.jpg');
-        background-size: 1288px 778.3px;
-        background-position: -56.2px -551.2px;
-        mask-image: linear-gradient(90deg, #000 72%, transparent);
-      }
+      /* The agent's message. */
+      .msg { margin-top: 12px; color: var(--text-2); font-size: 17px; line-height: 29px; }
+      .msg mark { padding: 3px 2px; border-radius: 2px; background: rgba(196, 160, 82, 0.5); color: #fff; }
 
-      /* The answer card: x 72-567, y 9-407 of answer-card.jpg, at 0.9. It fades at the bottom. */
-      .card { left: 720px; top: 212px; width: 446px; height: 358px; }
-      .card .shot {
-        border-radius: 13px 13px 0 0;
-        border-bottom: 0;
-        background-image: url('../media/answer-card.jpg');
-        background-size: 1260px 761.4px;
-        background-position: -65.8px -9.1px;
-        mask-image: linear-gradient(#000 74%, transparent);
+      /* The answer card. */
+      .card {
+        width: 432px;
+        margin: 10px 0 0 108px;
+        border: 1px solid var(--stroke);
+        border-radius: 12px;
+        background: var(--elevated);
+        box-shadow: 0 14px 40px rgba(0, 0, 0, 0.55);
+        font-size: 14.5px;
+        line-height: 1.5;
       }
+      .card-head { display: flex; align-items: center; gap: 7px; padding: 9px 12px 6px 13px; color: var(--text-2); font-size: 13px; font-weight: 600; }
+      .card-head svg { font-size: 15px; }
+      .card-head .x { margin-left: auto; color: var(--text-3); }
+      .card-quote { margin: 0 13px 8px; padding-left: 9px; border-left: 2px solid var(--accent); color: var(--text-3); font-size: 13px; }
+      .card-answer { padding: 0 13px; color: var(--text-1); }
+      .card-answer b { font-weight: 650; }
+      .card-note { padding: 7px 13px 0; color: var(--accent); font-size: 12.5px; font-weight: 500; }
+      .card-foot { display: flex; align-items: center; gap: 7px; padding: 8px 9px 9px; }
+      .card-input { flex: 1; padding: 6px 10px; border: 1px solid var(--stroke); border-radius: 8px; color: var(--text-4); font-size: 13.5px; }
+      .btn { display: inline-flex; align-items: center; gap: 6px; height: 31px; padding: 0 10px; border: 1px solid var(--stroke); border-radius: 8px; color: var(--text-2); font-size: 13px; font-weight: 500; white-space: nowrap; }
+      .btn svg { font-size: 14px; }
+
+      /* The replies above the composer. */
+      .strip { margin-top: auto; padding-top: 12px; border-top: 1px solid var(--stroke-soft); }
+      .strip-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 7px; color: var(--text-3); font-size: 12.5px; }
+      .strip-head b { color: var(--text-2); font-weight: 600; }
+      .reply {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        margin-top: 6px;
+        padding: 7px 9px 8px 11px;
+        border: 1px solid var(--stroke-soft);
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.035);
+      }
+      .reply-body { flex: 1; }
+      .reply-quote { padding-left: 8px; border-left: 2px solid var(--accent); color: var(--text-3); font-size: 13px; line-height: 1.4; }
+      .reply-comment { margin-top: 3px; color: var(--text-1); font-size: 15px; line-height: 1.35; }
+      .reply .x { margin-top: 2px; color: var(--text-4); font-size: 13px; }
     </style>
   </head>
   <body>
@@ -100,8 +164,57 @@
       <span class="chip">answer cards</span>
       <span class="chip">your own actions</span>
     </div>
-    <div class="panel card"><div class="shot"></div></div>
-    <div class="panel reply"><div class="shot"></div></div>
-    <div class="panel bar"><div class="shot"></div></div>
+
+    <div class="scene">
+      <div class="bar">
+        <span class="first"><svg viewBox="0 0 16 16"><path d="M6.5 3.5 2.5 7.5l4 4M2.5 7.5h6a5 5 0 0 1 5 5" /></svg>Reply</span>
+        <span><svg viewBox="0 0 16 16"><path d="M7 2.5 8.3 6 11.8 7.3 8.3 8.6 7 12.1 5.7 8.6 2.2 7.3 5.7 6z" /><path d="M12.5 10.5v3M11 12h3" /></svg>Ask</span>
+        <i></i>
+        <span class="on"><svg viewBox="0 0 16 16"><path d="M2.5 3h11v8H8l-3 2.5V11H2.5z" /><path d="M6.7 6.2a1.4 1.4 0 1 1 2 1.2c-.5.3-.7.5-.7 1M8 9.6v.1" /></svg>Explain</span>
+        <span><svg viewBox="0 0 16 16"><path d="M3 4.5h10M3 8h7M3 11.5h4.5" /></svg>Summarize</span>
+        <span><svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.5" /><path d="M5.6 8.2l1.6 1.6 3.2-3.4" /></svg>Fact-check</span>
+        <i></i>
+        <span><svg viewBox="0 0 16 16"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5" /><path d="M10.5 5.5v-2a1 1 0 0 0-1-1h-6a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2" /></svg></span>
+      </div>
+
+      <div class="msg">
+        <div>1. Start with a <mark>canary release</mark> to 5% of users.</div>
+        <div>2. Watch the error rate for one hour.</div>
+        <div>3. Announce the release on Friday.</div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <svg viewBox="0 0 16 16"><path d="M2.5 3h11v8H8l-3 2.5V11H2.5z" /><path d="M6.7 6.2a1.4 1.4 0 1 1 2 1.2c-.5.3-.7.5-.7 1M8 9.6v.1" /></svg>
+          Explain
+          <svg class="x" viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8" /></svg>
+        </div>
+        <div class="card-quote">canary release</div>
+        <div class="card-answer">A <b>canary release</b> gives the new version to a few users first. If errors rise, only those users are affected.</div>
+        <div class="card-note">Not in the chat. The agent does not see this.</div>
+        <div class="card-foot">
+          <div class="card-input">Ask a follow-up...</div>
+          <div class="btn"><svg viewBox="0 0 16 16"><path d="M2.5 3h11v8H8l-3 2.5V11H2.5z" /></svg>Send to chat</div>
+        </div>
+      </div>
+
+      <div class="strip">
+        <div class="strip-head"><b>2 replies</b> Sent with your next message.</div>
+        <div class="reply">
+          <div class="reply-body">
+            <div class="reply-quote">Watch the error rate for one hour.</div>
+            <div class="reply-comment">Make it 24 hours.</div>
+          </div>
+          <svg class="x" viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8" /></svg>
+        </div>
+        <div class="reply">
+          <div class="reply-body">
+            <div class="reply-quote">Announce the release on Friday.</div>
+            <div class="reply-comment">Move this to Monday.</div>
+          </div>
+          <svg class="x" viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8" /></svg>
+        </div>
+      </div>
+    </div>
   </body>
 </html>
