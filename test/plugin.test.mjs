@@ -737,6 +737,168 @@ test('saved actions replace the defaults, and extra ones sit behind the arrow', 
   assert.ok(fake.calls.request[0].params.input.includes('<question>\nDo Five.\n</question>'))
 })
 
+// ---------------------------------------------------------------------------
+// Actions for the agent
+// ---------------------------------------------------------------------------
+
+const VERIFY = 'Verify this point for me, and give your sources.'
+
+test('Fact-check: the quote becomes a reply with the request, and nothing is sent', async () => {
+  page = setup()
+  await page.highlight(page.byId('p1'))
+  await page.click(page.button(page.bar(), 'Fact-check'))
+
+  assert.deepEqual(
+    mod.repliesFor('new').map(({ quote, comment }) => ({ quote, comment })),
+    [{ quote: P1, comment: VERIFY }]
+  )
+  assert.equal(page.card(), null, 'no answer card opens')
+  assert.equal(page.barVisible(), false)
+  assert.equal(page.window.getSelection().isCollapsed, true)
+  assert.equal(fake.calls.request.length, 0, 'the model is not called')
+  assert.equal(fake.calls.submit.length, 0)
+  assert.equal(fake.calls.insertText.length, 0)
+})
+
+test('Fact-check: Send gets the focus, and it sends the quote with the request', async () => {
+  page = setup()
+
+  const view = await strip()
+
+  await page.highlight(page.byId('p1'))
+  await page.act(() => page.click(page.button(page.bar(), 'Fact-check')))
+
+  const send = page.button(view, 'Send')
+
+  assert.equal(page.doc.activeElement, send, 'Enter now sends the reply')
+  assert.equal(view.querySelector('.hab-strip-hint').textContent, 'Press Enter to send now.')
+
+  await page.act(() => send.click())
+  await tick()
+
+  assert.deepEqual(fake.calls.submit, [{ id: null, text: `> ${P1}\n\n${VERIFY}` }])
+  assert.deepEqual(mod.repliesFor('new'), [])
+
+  // The next reply comes from Reply, so the focus is not on Send.
+  await page.act(() => mod.addReply('new', P2))
+  assert.equal(view.querySelector('.hab-strip-hint').textContent, 'Sent with your next message.')
+})
+
+test('Fact-check: two points stack as two replies', async () => {
+  page = setup()
+
+  const view = await strip()
+
+  for (const id of ['p1', 'p2']) {
+    await page.highlight(page.byId(id))
+    await page.act(() => page.click(page.button(page.bar(), 'Fact-check')))
+  }
+
+  assert.deepEqual(
+    mod.repliesFor('new').map(reply => reply.quote),
+    [P1, P2]
+  )
+  assert.equal(page.doc.activeElement, page.button(view, 'Send'))
+})
+
+test('Fact-check: the focus goes to the composer while the agent works', async () => {
+  page = setup()
+
+  const { host } = await import('./fake-sdk.mjs')
+  const view = await strip()
+
+  await page.act(() => host.state.busy.set(true))
+  await page.highlight(page.byId('p1'))
+
+  const before = fake.calls.focus
+
+  await page.act(() => page.click(page.button(page.bar(), 'Fact-check')))
+
+  assert.notEqual(page.doc.activeElement, page.button(view, 'Send'), 'Send would interrupt the agent')
+  assert.equal(fake.calls.focus, before + 1)
+  assert.equal(mod.repliesFor('new').length, 1, 'the reply waits in the strip')
+})
+
+test('Fact-check: the focus goes to the composer when no strip, or more than one, is on the page', async () => {
+  page = setup()
+  await page.highlight(page.byId('p1'))
+
+  let before = fake.calls.focus
+
+  await page.click(page.button(page.bar(), 'Fact-check'))
+  assert.equal(fake.calls.focus, before + 1, 'no strip is drawn')
+
+  // One strip for each chat tile.
+  const views = [await strip(), await strip()]
+
+  await page.highlight(page.byId('p2'))
+  before = fake.calls.focus
+  await page.act(() => page.click(page.button(page.bar(), 'Fact-check')))
+
+  assert.equal(fake.calls.focus, before + 1)
+  assert.ok(views.every(view => page.doc.activeElement !== page.button(view, 'Send')))
+})
+
+test('a saved action for the agent is a template of the user', async () => {
+  const actions = [{ id: 'tests', label: 'Write tests', prompt: 'Write a test for this.', to: 'chat' }]
+
+  page = setup(CHAT, { storage: { actions } })
+  await page.highlight(page.byId('p2'))
+  await page.click(page.button(page.bar(), 'Write tests'))
+
+  assert.deepEqual(
+    mod.repliesFor('new').map(({ quote, comment }) => ({ quote, comment })),
+    [{ quote: P2, comment: 'Write a test for this.' }]
+  )
+  assert.equal(fake.calls.request.length, 0)
+})
+
+test('an action goes to a card unless it is saved for the agent', () => {
+  const [card, chat, junk] = mod.sanitizeActions([
+    { label: 'A', prompt: 'p' },
+    { label: 'B', prompt: 'p', to: 'chat' },
+    { label: 'C', prompt: 'p', to: 'elsewhere' }
+  ])
+
+  assert.deepEqual([card.to, chat.to, junk.to], ['card', 'chat', 'card'])
+})
+
+test('the settings page sets where an action goes', async () => {
+  page = setup()
+
+  const view = await page.mount(page.settingsPage().render)
+  const rows = () => [...view.querySelectorAll('.hab-row')]
+  const place = row => row.querySelector('select')
+  const prompt = row => row.querySelector('textarea')
+
+  assert.deepEqual(
+    rows().map(row => place(row).value),
+    ['card', 'card', 'chat'],
+    'Fact-check goes to the agent by default'
+  )
+  assert.equal(prompt(rows()[0]).placeholder, 'Question for the model')
+  assert.equal(prompt(rows()[2]).placeholder, 'Message for the agent')
+
+  // Explain, sent to the agent.
+  await page.act(() => {
+    const select = place(rows()[0])
+
+    select.value = 'chat'
+    page.fire(select, 'change')
+  })
+
+  assert.deepEqual(
+    page.store.actions.map(action => action.to),
+    ['chat', 'card', 'chat']
+  )
+  assert.equal(prompt(rows()[0]).placeholder, 'Message for the agent')
+
+  await page.highlight(page.byId('p1'))
+  await page.click(page.button(page.bar(), 'Explain'))
+  assert.equal(mod.repliesFor('new').length, 1)
+  assert.equal(fake.calls.request.length, 0)
+})
+
 test('bad saved actions are dropped, and the list is capped', () => {
   assert.equal(mod.sanitizeActions('nope'), null)
   assert.deepEqual(mod.sanitizeActions([{ label: 'No prompt' }, { prompt: 'No label' }, null]), [])

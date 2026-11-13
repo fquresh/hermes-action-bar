@@ -9,11 +9,17 @@
  *               followed by its own comment.
  *   Ask         Type your own question about the highlight.
  *   Explain,    Fixed questions. Ask and these open an answer card next to the
- *   Summarize,  highlight. The answer comes from one stateless model call
- *   Fact-check  (llm.oneshot). Nothing is added to the chat, and the agent does
+ *   Summarize   highlight. The answer comes from one stateless model call
+ *               (llm.oneshot). Nothing is added to the chat, and the agent does
  *               not see it. The card takes follow-up questions, and "Send to
  *               chat" moves an answer into the composer when it matters.
+ *   Fact-check  A template. It saves the quote as a reply with the comment
+ *               "Verify this point for me", so the agent, which has tools,
+ *               does the check in the chat. Nothing is sent from the bar.
  *   Copy        Copies the highlighted text.
+ *
+ * Each fixed action is a label, a prompt and a place: an answer card, or a
+ * reply for the agent. The user edits them on the Settings page.
  *
  * Plain ESM, loaded uncompiled by Hermes Desktop. Only `@hermes/plugin-sdk`,
  * `react` and `react/jsx-runtime` are importable, so UI is `jsx()` calls.
@@ -35,11 +41,12 @@ import * as React from 'react'
 import { jsx, jsxs } from 'react/jsx-runtime'
 
 export const ID = 'hermes-action-bar'
-export const VERSION = '0.1.0'
+export const VERSION = '0.2.0'
 
 const host = sdk.host
 
 const UI_ATTR = 'data-hermes-action-bar'
+const SEND_ATTR = 'data-hermes-action-bar-send'
 const EDITABLE = '[contenteditable="true"], [contenteditable=""], input, textarea'
 // Documented in the Desktop SDK guide as the chat surface root (one per chat
 // or tile). When no element carries it, the bar falls back to any selection
@@ -98,6 +105,7 @@ const STR = {
   stripOne: '1 reply',
   stripMany: n => `${n} replies`,
   stripHint: 'Sent with your next message.',
+  stripEnterHint: 'Press Enter to send now.',
   stripBusyHint: 'The agent is working. Use Send to deliver the replies now.',
   sendNow: 'Send',
   remove: 'Remove reply',
@@ -108,9 +116,13 @@ const STR = {
   settingsTitle: 'Action Bar',
   actionsHeading: 'Actions',
   actionsHelp:
-    'Each action is a button on the bar. Its prompt is the question that the model answers about the highlighted text. The first three show on the bar. The others are behind the arrow.',
+    'Each action is a button on the bar. "Answer in a card" asks the model its prompt about the highlighted text, and the answer stays out of the chat. "Send to the agent" saves the highlighted text as a reply, with its prompt as the comment. The first three actions show on the bar. The others are behind the arrow.',
   labelPlaceholder: 'Label',
   promptPlaceholder: 'Question for the model',
+  messagePlaceholder: 'Message for the agent',
+  placeLabel: 'Where the action goes',
+  toCard: 'Answer in a card',
+  toChat: 'Send to the agent',
   addAction: 'Add action',
   addResearchSet: 'Add research set',
   reset: 'Reset to defaults',
@@ -144,8 +156,9 @@ export const DEFAULT_ACTIONS = [
     id: 'factcheck',
     label: 'Fact-check',
     icon: 'check',
-    prompt:
-      'Fact-check this passage. List each factual claim on its own line and mark it Supported, Doubtful or Cannot verify, with one short reason. You have no web access, so judge from what you know. Then say which claims to verify and where.'
+    // The answer model has no tools. The agent has them, so this one goes to the agent.
+    to: 'chat',
+    prompt: 'Verify this point for me, and give your sources.'
   }
 ]
 
@@ -257,6 +270,9 @@ export function formatReplies(replies, text) {
   return [...blocks, clean(text).trim()].filter(Boolean).join('\n\n')
 }
 
+/** Where an action goes: an answer card ('card'), or a reply for the agent ('chat'). */
+export const placeOf = action => (action?.to === 'chat' ? 'chat' : 'card')
+
 export function sanitizeActions(value) {
   if (!Array.isArray(value)) {
     return null
@@ -280,7 +296,7 @@ export function sanitizeActions(value) {
     }
 
     seen.add(id)
-    out.push({ id, label, prompt, icon: ICONS[raw?.icon] ? raw.icon : 'bulb' })
+    out.push({ id, label, prompt, icon: ICONS[raw?.icon] ? raw.icon : 'bulb', to: placeOf(raw) })
 
     if (out.length >= ACTIONS_MAX) {
       break
@@ -979,6 +995,7 @@ const STYLE = `
 .hab-btn{all:unset;flex:none;display:inline-flex;align-items:center;gap:5px;height:28px;padding:0 9px;border-radius:7px;border:1px solid var(--ui-stroke-secondary);color:var(--ui-text-secondary);font-size:12px;font-weight:500;line-height:1;white-space:nowrap;cursor:pointer}
 .hab-btn:hover,.hab-btn:focus-visible{background:var(--ui-control-hover-background);color:var(--ui-text-primary)}
 .hab-btn[disabled]{opacity:.5;cursor:default}
+.hab-strip .hab-btn:focus{border-color:var(--ui-accent);color:var(--ui-text-primary)}
 .hab-btn.hab-accent{border-color:color-mix(in srgb,var(--ui-accent) 45%,transparent);background:color-mix(in srgb,var(--ui-accent) 22%,transparent);color:var(--ui-text-primary)}
 .hab-btn.hab-accent:hover,.hab-btn.hab-accent:focus-visible{background:color-mix(in srgb,var(--ui-accent) 32%,transparent);color:var(--ui-text-primary)}
 .hab-ghost{all:unset;flex:none;display:inline-grid;place-items:center;width:24px;height:24px;border-radius:6px;color:var(--ui-text-tertiary);cursor:pointer}
@@ -996,7 +1013,9 @@ const STYLE = `
 .hab-settings h3{margin:0 0 4px;font-size:13px;font-weight:600}
 .hab-settings p{margin:0 0 10px;color:var(--ui-text-tertiary);font-size:12px;line-height:1.5}
 .hab-row{display:flex;align-items:flex-start;gap:8px;margin-bottom:8px}
+.hab-row-side{flex:none;display:flex;flex-direction:column;gap:6px;width:150px}
 .hab-row .hab-input{flex:none;width:150px}
+.hab-row select.hab-input{height:30px;padding:0 6px;cursor:pointer}
 .hab-row textarea.hab-input{flex:1;width:auto;max-height:160px;field-sizing:content}
 .hab-tools{display:flex;flex-wrap:wrap;gap:8px}
 .hab-choice{display:flex;align-items:center;gap:8px;margin-bottom:6px;cursor:pointer}
@@ -1065,11 +1084,22 @@ export function ReplyStrip() {
   const all = useStore($replies)
   const sessionKey = useHostValue(host?.state?.focusedStoredSessionId, null) || 'new'
   const busy = Boolean(useHostValue(host?.state?.busy, false))
+  // An action for the agent puts the focus on Send. The hint then says what Enter does.
+  const [sendFocused, setSendFocused] = React.useState(false)
   const list = all[sessionKey] ?? []
+
+  // A removed button does not always get a blur event.
+  React.useEffect(() => {
+    if (!list.length) {
+      setSendFocused(false)
+    }
+  }, [list.length])
 
   if (!list.length) {
     return null
   }
+
+  const hint = busy ? STR.stripBusyHint : sendFocused ? STR.stripEnterHint : STR.stripHint
 
   return jsxs('div', {
     className: 'hab-strip',
@@ -1082,10 +1112,13 @@ export function ReplyStrip() {
             className: 'hab-strip-count',
             children: list.length === 1 ? STR.stripOne : STR.stripMany(list.length)
           }),
-          jsx('span', { className: 'hab-strip-hint', children: busy ? STR.stripBusyHint : STR.stripHint }),
+          jsx('span', { className: 'hab-strip-hint', children: hint }),
           jsxs('button', {
             type: 'button',
             className: 'hab-btn',
+            [SEND_ATTR]: '',
+            onFocus: () => setSendFocused(true),
+            onBlur: () => setSendFocused(false),
             onClick: () => void sendNow(sessionKey),
             children: [jsx(Icon, { name: 'send' }), STR.sendNow]
           })
@@ -1157,19 +1190,36 @@ export function SettingsPage() {
               {
                 className: 'hab-row',
                 children: [
-                  jsx('input', {
-                    className: 'hab-input',
-                    'aria-label': STR.labelPlaceholder,
-                    placeholder: STR.labelPlaceholder,
-                    maxLength: LABEL_MAX,
-                    value: row.label,
-                    onChange: event => edit(row.id, { label: event.target.value }),
-                    onKeyDown: keepKeysLocal
+                  jsxs('div', {
+                    className: 'hab-row-side',
+                    children: [
+                      jsx('input', {
+                        className: 'hab-input',
+                        'aria-label': STR.labelPlaceholder,
+                        placeholder: STR.labelPlaceholder,
+                        maxLength: LABEL_MAX,
+                        value: row.label,
+                        onChange: event => edit(row.id, { label: event.target.value }),
+                        onKeyDown: keepKeysLocal
+                      }),
+                      jsxs('select', {
+                        className: 'hab-input',
+                        'aria-label': STR.placeLabel,
+                        title: STR.placeLabel,
+                        value: placeOf(row),
+                        onChange: event => edit(row.id, { to: event.target.value }),
+                        onKeyDown: keepKeysLocal,
+                        children: [
+                          jsx('option', { value: 'card', children: STR.toCard }),
+                          jsx('option', { value: 'chat', children: STR.toChat })
+                        ]
+                      })
+                    ]
                   }),
                   jsx('textarea', {
                     className: 'hab-input',
-                    'aria-label': STR.promptPlaceholder,
-                    placeholder: STR.promptPlaceholder,
+                    'aria-label': placeOf(row) === 'chat' ? STR.messagePlaceholder : STR.promptPlaceholder,
+                    placeholder: placeOf(row) === 'chat' ? STR.messagePlaceholder : STR.promptPlaceholder,
                     maxLength: PROMPT_MAX,
                     rows: 2,
                     value: row.prompt,
@@ -1207,7 +1257,7 @@ export function SettingsPage() {
                 className: 'hab-btn',
                 disabled: full,
                 title: full ? STR.full : undefined,
-                onClick: () => apply([...rows, { id: uid(), label: '', prompt: '', icon: 'bulb' }]),
+                onClick: () => apply([...rows, { id: uid(), label: '', prompt: '', icon: 'bulb', to: 'card' }]),
                 children: [jsx(Icon, { name: 'plus' }), STR.addAction]
               }),
               jsx('button', {
@@ -1715,7 +1765,46 @@ function createUi(ctx, doc, view) {
     }
   }
 
+  // An action for the agent: the quote and the action's prompt become a reply.
+  // Nothing is sent from here.
+  function addForAgent(action) {
+    const found = take()
+
+    if (!found) {
+      host.notify?.({ kind: 'info', message: STR.noSelection })
+
+      return
+    }
+
+    closeCard()
+    addReply(composerKey(), found.text, action.prompt)
+    hideBar()
+    doc.getSelection?.()?.removeAllRanges?.()
+    // After the strip has drawn the new reply.
+    ctx.setTimeout(focusSend, 0)
+  }
+
+  // The reply is complete, so the focus goes to the strip's Send button and
+  // Enter sends it. The focus goes to the composer when that is not safe: the
+  // agent works (a Send then can interrupt it), or there is not exactly one
+  // strip (not drawn yet, or one for each chat tile).
+  const focusSend = () => {
+    const sends = doc.querySelectorAll(`[${UI_ATTR}="strip"] [${SEND_ATTR}]`)
+
+    if (sends.length === 1 && !host?.state?.busy?.get?.()) {
+      sends[0].focus()
+    } else {
+      host.composer?.focus?.(null)
+    }
+  }
+
   function openAnswer(action) {
+    if (placeOf(action) === 'chat') {
+      addForAgent(action)
+
+      return
+    }
+
     if (openThread(action.label, action.icon)) {
       void runTurn(action.label, action.prompt)
     }

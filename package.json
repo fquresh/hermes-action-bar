@@ -1,6 +1,6 @@
 {
   "name": "hermes-action-bar",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Hermes Desktop plugin: reply to a highlight, or ask about it in an answer card that stays out of the chat.",
   "private": true,
   "type": "module",

@@ -1,7 +1,7 @@
 name: hermes-action-bar
-version: 0.1.0
+version: 0.2.0
 manifest_version: 2
-description: "Reply to a highlight, or ask about it, in Hermes Desktop. Select text in a chat and a small bar offers Reply, Ask, Explain, Summarize, Fact-check and Copy. Reply collects quotes with one comment each and sends them with your next message. The other actions answer in a card next to the highlight and add nothing to the chat. Desktop-only: no Python half, no tools, no hooks."
+description: "Reply to a highlight, or ask about it, in Hermes Desktop. Select text in a chat and a small bar offers Reply, Ask, Explain, Summarize, Fact-check and Copy. Reply collects quotes with one comment each and sends them with your next message. Fact-check is a Reply with a ready request to verify the quote. Ask, Explain and Summarize answer in a card next to the highlight and add nothing to the chat. Desktop-only: no Python half, no tools, no hooks."
 author: fquresh
 license: MIT
 homepage: https://github.com/fquresh/hermes-action-bar

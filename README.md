@@ -7,17 +7,19 @@ It is a plugin for a Hermes Agent user to better engage with their Hermes agent 
 
 Select text in a chat and a small bar appears, with two kinds of action:
 
-1. **Reply**
-   - It keeps the quote and one comment as a card above the composer.
+1. **Reply | Fact-check**
+   - Reply keeps the quote and one comment as a card above the composer.
    - On send, the cards go in front of your message as Markdown blockquotes.
      Several passages each get their own comment in one message.
-2. **Ask | Explain | Summarize | Fact-check**
+   - Fact-check is a Reply with a ready comment: "Verify this point for me, and give your sources."
+     The agent has tools, so it does the check in the chat.
+2. **Ask | Explain | Summarize**
    - For a question that only the reader has.
      They open an "answer card" next to the highlight, with follow-up questions.
    - The answer does not enter the chat and the agent does not see it.
    - **Send to chat** puts it in the composer if it matters to the work.
 
-Note: actions are a label and a prompt.
+Note: actions are a label, a prompt and a place: an answer card, or the agent.
 You edit them on a settings page.
 **Copy** is on the bar too, and it copies the selected text.
 
@@ -85,10 +87,23 @@ You can edit a comment or remove a reply in the strip above the composer.
 The **Send** button on the strip sends the replies when the composer is empty.
 Replies belong to the chat where you made them.
 
+### Fact-check
+
+1. Select a claim in a reply.
+2. Click **Fact-check**. The quote goes to the strip above the composer, with the comment "Verify this point for me, and give your sources."
+3. Press Enter. The focus is on the **Send** button of the strip.
+
+The agent gets the quote and the comment, and it does the check in the chat with its tools.
+Nothing is sent before you press Enter or click **Send**.
+You can change the comment in the strip first.
+You can also add more points, or type a message, and send all of them as one message.
+
+While the agent works, the focus goes to the composer and the reply waits in the strip.
+
 ### Ask and the fixed actions
 
 1. Select text.
-2. Click **Explain**, **Summarize** or **Fact-check**. Or click **Ask** and type your own question.
+2. Click **Explain** or **Summarize**. Or click **Ask** and type your own question.
 3. Read the answer in the card.
 4. Type a follow-up question in the card if you have one.
 
@@ -108,7 +123,13 @@ Escape closes the card.
 
 Open **Settings > Plugins > Action Bar**.
 
-Each action is a label and a prompt.
+Each action is a label, a prompt and a place.
+
+| Place | What a click does |
+|---|---|
+| **Answer in a card** | The model answers the prompt about the highlighted text, in a card that stays out of the chat. |
+| **Send to the agent** | The highlighted text becomes a reply card, with the prompt as its comment. It works as a template, for example "Write a test for this." |
+
 You can change the three defaults, add your own, and change their order.
 The first three actions show on the bar.
 The others are behind the arrow.
@@ -148,6 +169,7 @@ It has no Python half, no tools and no hooks.
 - **The bar and the card** are the plugin's own elements on `<body>`. They use theme variables only, so they follow the light and the dark theme.
 - **The highlight** stays visible after the selection is gone. The plugin paints it with the CSS Custom Highlight API, which does not change the page.
 - **Reply cards** render in the `composer.top` slot. A `composer.middleware` handler puts them in front of your message when you send.
+- **Actions for the agent**, such as Fact-check, make a reply card. They call no model.
 - **Answers** come from `host.request('llm.oneshot')`. This is one stateless model call. It reads no session history and writes none.
 - **Settings** are in `ctx.storage`.
 
@@ -163,7 +185,7 @@ Two safety details:
 ## Privacy
 
 - An answer card sends the highlighted text, the text around it (at most 4,000 characters) and the card's earlier turns to your configured model provider. It uses the model of the open chat, or your auxiliary model.
-- Reply and Copy send nothing.
+- Reply, Copy and an action for the agent send nothing to a model. A reply goes to the agent when you send it.
 - Pending replies stay in memory until you send or remove them. They are not written to disk.
 - Your actions and the scope setting are saved in the plugin's own storage.
 - There is no telemetry and no other network call.
@@ -172,10 +194,10 @@ Two safety details:
 
 - An answer arrives complete. It does not appear word by word, because `llm.oneshot` does not stream.
 - The card uses the model of the open chat. If that model has no valid login or subscription, the card shows the provider's error. Correct the model in Hermes, then click **Retry**.
-- The answer model has no tools and no web access. Fact-check tells you what to verify. Use **Send to chat** to let the agent verify it with its tools.
-- While the agent works, a typed Enter steers the turn and does not pass through plugin middleware ([hermes-agent#126917](https://github.com/NousResearch/hermes-agent/issues/126917)). The replies stay in the strip. Use the **Send** button to deliver them.
+- The model of an answer card has no tools and no web access. For a check that needs tools, use an action that goes to the agent, such as Fact-check.
+- While the agent works, Hermes handles a typed Enter by your `busy_input_mode` setting: interrupt, steer or queue. In the interrupt and the steer mode, the message does not pass through plugin middleware ([hermes-agent#126917](https://github.com/NousResearch/hermes-agent/issues/126917)). The replies stay in the strip. Use the **Send** button to deliver them.
 - A queued message and a voice message do not take the replies. Only a message that you send with Enter or with a click takes them. The replies stay in the strip, and the **Send** button delivers them.
-- With several chat tiles open, the strip shows the replies of the chat that has focus.
+- With several chat tiles open, the strip shows the replies of the chat that has focus. Fact-check then puts the focus in the composer, so click **Send** on the strip.
 
 ## Develop
 
